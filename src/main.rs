@@ -2,6 +2,7 @@ use clap::{Parser, ValueEnum};
 use fantoccini::ClientBuilder;
 use std::net::TcpListener;
 use std::process::Stdio;
+use thiserror::Error;
 use tokio::process::Command;
 use tokio::time::{sleep, Duration};
 
@@ -24,17 +25,26 @@ impl Drop for Driver {
     }
 }
 
-async fn start_driver(browser: Browser, port: u16) -> Result<Driver, std::io::Error> {
+#[derive(Error, Debug)]
+enum DriverError {
+    #[error("Failed to start WebDriver process: {0}")]
+    ProcessStartError(#[from] std::io::Error),
+    #[error("Port {0} is already in use")]
+    PortInUse(u16),
+    #[error("Failed to connect to WebDriver: {0}")]
+    WebDriverConnectionError(#[from] fantoccini::error::CmdError),
+    #[error("Failed to build client {0}")]
+    WebDriverClientError(#[from] fantoccini::error::NewSessionError),
+}
+
+async fn start_driver(browser: Browser, port: u16) -> Result<Driver, DriverError> {
     // Check if the port is available
     match TcpListener::bind(("127.0.0.1", port)) {
         Ok(listener) => {
             drop(listener); // Close the listener immediately as we only need to check the port availability
         }
         Err(_) => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::AddrInUse,
-                format!("Port {} is already in use", port),
-            ));
+            return Err(DriverError::PortInUse(port));
         }
     }
 
@@ -81,17 +91,14 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), fantoccini::error::CmdError> {
+async fn main() -> Result<(), DriverError> {
     let args = Args::parse();
 
-    let _driver = start_driver(args.browser.clone(), args.port)
-        .await
-        .expect("failed to start WebDriver");
+    let _driver = start_driver(args.browser.clone(), args.port).await?;
 
     let c = ClientBuilder::native()
         .connect(&format!("http://localhost:{}", args.port))
-        .await
-        .expect("failed to connect to WebDriver");
+        .await?;
 
     // Go to the specified URL
     c.goto(&args.url).await?;
@@ -121,8 +128,7 @@ async fn main() -> Result<(), fantoccini::error::CmdError> {
             StdCommand::new("sh")
                 .arg("-c")
                 .arg(openconnect_command)
-                .status()
-                .expect("Failed to execute command");
+                .status()?;
             break;
         }
     }
