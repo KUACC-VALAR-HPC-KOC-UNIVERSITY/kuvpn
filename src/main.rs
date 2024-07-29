@@ -1,3 +1,4 @@
+use clap::Parser;
 use fantoccini::ClientBuilder;
 use std::process::Stdio;
 use tokio::process::Command;
@@ -28,8 +29,19 @@ async fn start_chromedriver() -> Result<ChromeDriver, std::io::Error> {
     Ok(ChromeDriver { process })
 }
 
+/// Simple program to retrieve DSID cookie and execute OpenConnect command
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// URL to visit
+    #[arg(short, long, default_value = "https://vpn.ku.edu.tr")]
+    url: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), fantoccini::error::CmdError> {
+    let args = Args::parse();
+
     let _driver = start_chromedriver()
         .await
         .expect("failed to start ChromeDriver");
@@ -38,8 +50,8 @@ async fn main() -> Result<(), fantoccini::error::CmdError> {
         .await
         .expect("failed to connect to WebDriver");
 
-    // Go to the VPN login page
-    c.goto("https://vpn.ku.edu.tr").await?;
+    // Go to the specified URL
+    c.goto(&args.url).await?;
 
     loop {
         // Execute JavaScript to get the DSID cookie

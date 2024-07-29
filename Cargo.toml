@@ -1,8 +1,9 @@
 [package]
 name = "kuvpn"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
+clap = { version = "4.5.11", features = ["derive"] }
 fantoccini = "0.21.0"
 tokio = { version = "1.39.2", features = ["tokio-macros", "rt", "macros", "rt-multi-thread", "process"] }
