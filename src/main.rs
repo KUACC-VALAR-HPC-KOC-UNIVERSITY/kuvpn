@@ -1,32 +1,52 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use fantoccini::ClientBuilder;
 use std::process::Stdio;
 use tokio::process::Command;
 use tokio::time::{sleep, Duration};
 
-struct ChromeDriver {
-    process: tokio::process::Child,
+#[derive(ValueEnum, Clone, Debug)]
+enum Browser {
+    Chrome,
+    Gecko,
+    None,
 }
 
-impl Drop for ChromeDriver {
+struct Driver {
+    process: Option<tokio::process::Child>,
+}
+
+impl Drop for Driver {
     fn drop(&mut self) {
-        // Attempt to kill the ChromeDriver process
-        let _ = self.process.kill();
+        if let Some(ref mut process) = self.process {
+            let _ = process.kill();
+        }
     }
 }
 
-async fn start_chromedriver() -> Result<ChromeDriver, std::io::Error> {
-    let process = Command::new("chromedriver")
-        .arg("--port=9515")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-
-    // Wait a moment to ensure ChromeDriver is fully started
-    sleep(Duration::from_secs(2)).await;
-
-    Ok(ChromeDriver { process })
+async fn start_driver(browser: Browser, port: u16) -> Result<Driver, std::io::Error> {
+    match browser {
+        Browser::Chrome => {
+            let process = Command::new("chromedriver")
+                .arg(format!("--port={}", port))
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?;
+            sleep(Duration::from_secs(2)).await;
+            Ok(Driver { process: Some(process) })
+        },
+        Browser::Gecko => {
+            let process = Command::new("geckodriver")
+                .arg(format!("--port={}", port))
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?;
+            sleep(Duration::from_secs(2)).await;
+            Ok(Driver { process: Some(process) })
+        },
+        Browser::None => Ok(Driver { process: None }),
+    }
 }
 
 /// Simple program to retrieve DSID cookie and execute OpenConnect command
@@ -36,17 +56,26 @@ struct Args {
     /// URL to visit
     #[arg(short, long, default_value = "https://vpn.ku.edu.tr")]
     url: String,
+
+    /// Browser to use
+    #[arg(short, long, value_enum, default_value_t = Browser::Chrome)]
+    browser: Browser,
+
+    /// Port to use for WebDriver
+    #[arg(short, long, default_value_t = 9515)]
+    port: u16,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), fantoccini::error::CmdError> {
     let args = Args::parse();
 
-    let _driver = start_chromedriver()
+    let _driver = start_driver(args.browser.clone(), args.port)
         .await
-        .expect("failed to start ChromeDriver");
+        .expect("failed to start WebDriver");
+
     let c = ClientBuilder::native()
-        .connect("http://localhost:9515")
+        .connect(&format!("http://localhost:{}", args.port))
         .await
         .expect("failed to connect to WebDriver");
 
