@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
 use fantoccini::ClientBuilder;
+use std::net::TcpListener;
 use std::process::Stdio;
 use tokio::process::Command;
 use tokio::time::{sleep, Duration};
@@ -24,6 +25,19 @@ impl Drop for Driver {
 }
 
 async fn start_driver(browser: Browser, port: u16) -> Result<Driver, std::io::Error> {
+    // Check if the port is available
+    match TcpListener::bind(("127.0.0.1", port)) {
+        Ok(listener) => {
+            drop(listener); // Close the listener immediately as we only need to check the port availability
+        }
+        Err(_) => {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::AddrInUse,
+                format!("Port {} is already in use", port),
+            ));
+        }
+    }
+
     match browser {
         Browser::Chrome => {
             let process = Command::new("chromedriver")
