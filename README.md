@@ -64,3 +64,16 @@ Options:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+## TODO List
+
+- [ ] Add automatic typing of email and password via environment variable as well as clicking next
+- [ ] Add Nix build for more reliable building
+- [ ] Create AppImage
+- [ ] Create another version with an embedded browser for those who prefer
+
+## Contributing
+
+We welcome contributions from everyone! If you have an idea, fix, or improvement, please feel free to get involved.
+
