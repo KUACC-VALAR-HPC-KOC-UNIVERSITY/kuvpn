@@ -66,6 +66,31 @@ Options:
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
+# Ubuntu QuickInstall
+
+Install rustup & Restart terminal (Open new one)
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+``` 
+
+Install openssl-dev
+```
+sudo apt-get install libssl-dev
+```
+
+Install chromium-chromedriver
+```
+sudo apt-get install chromium-chromedriver
+```
+
+Install kuvpn
+```
+cargo install --git https://github.com/ealtun21/kuvpn
+```
+
+That is it! Enjoy!
+
+
 ## TODO List
 
 - [ ] Add automatic typing of email and password via environment variable as well as clicking next
