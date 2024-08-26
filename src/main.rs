@@ -119,7 +119,7 @@ async fn main() -> Result<(), DriverError> {
 }
 
 async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
-    let c = ClientBuilder::native()
+    let c = ClientBuilder::rustls()?
         .connect(&format!("http://localhost:{}", port))
         .await
         .map_err(DriverError::WebDriverClientError)?;

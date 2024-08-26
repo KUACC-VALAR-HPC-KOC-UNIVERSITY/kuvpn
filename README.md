@@ -86,15 +86,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
 
    This command updates your current shell session with the new environment variables set by Rust.
 
-2. **Install OpenSSL development libraries**:
-
-   OpenSSL libraries are required for building kuvpn. Install them using:
-
-   ```bash
-   sudo apt-get install libssl-dev
-   ```
-
-3. **Install Chromium and ChromeDriver**:
+2. **Install Chromium and ChromeDriver**:
 
    If you plan to use the Chrome browser for KUVPN, you will need to install Chromium and its corresponding ChromeDriver:
 
@@ -102,7 +94,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    sudo apt-get install chromium-chromedriver
    ```
 
-4. **Install KUVPN**:
+3. **Install KUVPN**:
 
    With Rust and Cargo installed, you can now install KUVPN directly from the Git repository:
 
@@ -110,7 +102,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    cargo install --git https://github.com/ealtun21/kuvpn
    ```
 
-5. **Run KUVPN**:
+4. **Run KUVPN**:
 
    Once KUVPN is installed, you can run it with the default settings:
 
