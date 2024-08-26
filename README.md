@@ -16,7 +16,6 @@ Ensure you have the following installed on your system:
    - **ChromeDriver**: Required if you choose to use the Chrome browser.
    - **GeckoDriver**: Required if you choose to use the Gecko browser (Firefox).
 
-
 ### Installation
 
 1. **Clone and Install KUVPN**:
@@ -65,31 +64,67 @@ Options:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Ubuntu Quick Install
 
-# Ubuntu QuickInstall
+Follow these steps to quickly set up KUVPN on Ubuntu:
 
-Install rustup & Restart terminal (Open new one)
-```
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-``` 
+1. **Install Rust and Cargo using rustup**:
 
-Install openssl-dev
-```
-sudo apt-get install libssl-dev
-```
+   To install Rust and Cargo, you will use the rustup script. Open a terminal and run:
 
-Install chromium-chromedriver
-```
-sudo apt-get install chromium-chromedriver
-```
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
 
-Install kuvpn
-```
-cargo install --git https://github.com/ealtun21/kuvpn
-```
+   After running the script, follow the on-screen instructions to complete the installation. Once the installation is finished, you will need to restart your terminal session for the changes to take effect.
 
-That is it! Enjoy!
+   **Alternatively, you can use the following command to reload your shell without closing the terminal:**
 
+   ```bash
+   source $HOME/.cargo/env
+   ```
+
+   This command updates your current shell session with the new environment variables set by Rust.
+
+2. **Install OpenSSL development libraries**:
+
+   OpenSSL libraries are required for building kuvpn. Install them using:
+
+   ```bash
+   sudo apt-get install libssl-dev
+   ```
+
+3. **Install Chromium and ChromeDriver**:
+
+   If you plan to use the Chrome browser for KUVPN, you will need to install Chromium and its corresponding ChromeDriver:
+
+   ```bash
+   sudo apt-get install chromium-chromedriver
+   ```
+
+4. **Install KUVPN**:
+
+   With Rust and Cargo installed, you can now install KUVPN directly from the Git repository:
+
+   ```bash
+   cargo install --git https://github.com/ealtun21/kuvpn
+   ```
+
+5. **Run KUVPN**:
+
+   Once KUVPN is installed, you can run it with the default settings:
+
+   ```bash
+   kuvpn
+   ```
+
+   Or, if you want to customize the connection parameters, use:
+
+   ```bash
+   kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
+   ```
+
+That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 
 ## TODO List
 
@@ -101,4 +136,3 @@ That is it! Enjoy!
 ## Contributing
 
 We welcome contributions from everyone! If you have an idea, fix, or improvement, please feel free to get involved.
-
