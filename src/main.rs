@@ -138,13 +138,13 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
 
             // Use std::process::Command to execute openconnect
             use std::process::Command as StdCommand;
+            // Spawn the openconnect process in the background
             StdCommand::new("sh")
                 .arg("-c")
-                .arg(openconnect_command)
-                .spawn() // Use spawn instead of status
+                .arg(&openconnect_command)
+                .status()
                 .map_err(DriverError::ProcessStartError)?;
-
-            // Return immediately after starting the openconnect process
+                        
             return Ok(());
         }
 
