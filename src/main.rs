@@ -51,6 +51,8 @@ impl Driver {
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
 
+                sleep(Duration::from_secs(2)).await; // Delay before retrying
+
                 Ok(Driver {
                     process: Some(process),
                 })
@@ -63,6 +65,8 @@ impl Driver {
                     .stderr(Stdio::piped())
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
+
+                sleep(Duration::from_secs(2)).await; // Delay before retrying
 
                 Ok(Driver {
                     process: Some(process),
