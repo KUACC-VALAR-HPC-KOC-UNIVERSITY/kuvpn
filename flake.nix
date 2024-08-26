@@ -16,7 +16,7 @@
       # Define the default package
       packages.default = rustPlatform.buildRustPackage rec {
         pname = "kuvpn";
-        version = "0.2.2";
+        version = "0.3.0";
 
         src = ./.;
 
@@ -46,6 +46,7 @@
       devShells.default = pkgs.mkShell {
         buildInputs = [
           pkgs.rustc
+          pkgs.rustfmt
           pkgs.cargo
         ];
         # Runtime dependencies for the shell environment

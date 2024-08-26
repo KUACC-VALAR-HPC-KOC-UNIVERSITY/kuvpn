@@ -22,7 +22,7 @@ impl Drop for Driver {
         if let Some(ref mut process) = self.process {
             let _ = process.start_kill();
             let _ = process.try_wait();
-        }   
+        }
     }
 }
 
@@ -50,7 +50,7 @@ impl Driver {
                     .stderr(Stdio::piped())
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
-                sleep(Duration::from_secs(2)).await;
+
                 Ok(Driver {
                     process: Some(process),
                 })
@@ -63,7 +63,7 @@ impl Driver {
                     .stderr(Stdio::piped())
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
-                sleep(Duration::from_secs(2)).await;
+
                 Ok(Driver {
                     process: Some(process),
                 })
@@ -109,13 +109,43 @@ struct Args {
 async fn main() -> Result<(), DriverError> {
     let args = Args::parse();
 
-    let driver = Driver::start(args.browser.clone(), args.port).await?;
+    let mut attempt_count = 0;
+    let mut driver = Driver::start(args.browser.clone(), args.port).await?;
 
-    let result = run_client(args.url, args.port).await;
+    loop {
+        match run_client(args.url.clone(), args.port).await {
+            Ok(_) => break,
+            Err(err) => match err {
+                DriverError::WebDriverConnectionError(e) => {
+                    println!("WebDriverConnectionError encountered: {}. Retrying...", e);
+                    attempt_count += 1;
+                    if attempt_count > 3 {
+                        println!("Exceeded maximum retry attempts for WebDriver connection.");
+                        return Err(DriverError::WebDriverConnectionError(e));
+                    }
+                    sleep(Duration::from_secs(2)).await; // Delay before retrying
+                }
+                DriverError::WebDriverClientError(e) => {
+                    println!(
+                        "WebDriverClientError encountered: {}. Restarting driver...",
+                        e
+                    );
+                    drop(driver); // Drop the current driver to kill the process
+                    driver = Driver::start(args.browser.clone(), args.port).await?; // Restart driver
+                    attempt_count = 0; // Reset attempt count after restarting
+                }
+                DriverError::ProcessStartError(e) => {
+                    println!(
+                        "ProcessStartError encountered: {}. Stopping application.",
+                        e
+                    );
+                    return Err(DriverError::ProcessStartError(e)); // Exit on process start error
+                }
+            },
+        }
+    }
 
-    drop(driver);
-
-    result
+    Ok(())
 }
 
 async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
