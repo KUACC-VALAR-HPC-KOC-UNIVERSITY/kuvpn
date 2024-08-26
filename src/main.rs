@@ -38,9 +38,9 @@ enum DriverError {
 }
 
 impl Driver {
-    async fn start(browser: Browser, port: u16) -> Result<Driver, DriverError> {
-        let port = Driver::find_available_port(port).await;
-        println!("Using port: {}", port);
+    async fn start(browser: Browser, port: &mut u16) -> Result<Driver, DriverError> {
+        *port = Driver::find_available_port(*port).await;
+        println!("Using port: {}", *port);
 
         match browser {
             Browser::Chrome => {
@@ -108,9 +108,9 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(), DriverError> {
-    let args = Args::parse();
+    let mut args = Args::parse();
 
-    let mut driver = Driver::start(args.browser.clone(), args.port).await?;
+    let mut driver = Driver::start(args.browser.clone(), &mut args.port).await?;
 
     // Wait until the WebDriver is reachable
     let address = format!("127.0.0.1:{}", args.port);
@@ -146,7 +146,7 @@ async fn main() -> Result<(), DriverError> {
                         e
                     );
                     drop(driver); // Drop the current driver to kill the process
-                    driver = Driver::start(args.browser.clone(), args.port).await?; // Restart driver
+                    driver = Driver::start(args.browser.clone(), &mut args.port).await?; // Restart driver
                     attempt_count = 0; // Reset attempt count after restarting
                 }
                 DriverError::ProcessStartError(e) => {
