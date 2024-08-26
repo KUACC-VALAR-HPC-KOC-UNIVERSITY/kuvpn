@@ -5,6 +5,7 @@ use args::Args;
 use clap::Parser;
 use driver::{Driver, DriverError};
 use fantoccini::ClientBuilder;
+use std::env;
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
@@ -59,6 +60,9 @@ async fn main() -> Result<(), DriverError> {
 }
 
 async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
+    let raw_username = env::var("KUVPN_USERNAME");
+    let raw_password = env::var("KUVPN_PASSWORD");
+
     let c = ClientBuilder::rustls()?
         .connect(&format!("http://localhost:{}", port))
         .await
@@ -66,6 +70,54 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
 
     c.goto(&url).await?;
 
+    if let (Ok(username), Ok(password)) = (raw_username, raw_password) {
+        // Wait for the email input field to appear and then fill it
+        wait_and_send_keys(
+            &c,
+            "input[name='loginfmt']",
+            &username,
+            Duration::from_secs(10),
+        )
+        .await;
+
+        // Click the "Next" button
+        wait_and_click(&c, "#idSIButton9", Duration::from_secs(10)).await;
+
+        // Wait for the password input field to appear and then fill it
+        wait_and_send_keys(
+            &c,
+            "input[name='passwd']",
+            &password,
+            Duration::from_secs(10),
+        )
+        .await;
+
+        // Click the "Sign in" button
+        wait_and_click(&c, "#idSIButton9", Duration::from_secs(10)).await;
+
+        // Click the "No: For Stay Signed in?" button as, it will not remember anyways
+        wait_and_click(&c, "#idSIButton9", Duration::from_secs(60)).await;
+
+        // Execute gowelcome(); until it fails or runs 2 times correctly
+        let mut successful_executions = 0;
+        while successful_executions < 2 {
+            match c.execute("gowelcome();", vec![]).await {
+                Ok(_) => {
+                    successful_executions += 1;
+                }
+                Err(_) => {
+                    break;
+                }
+            }
+        }
+
+        // Check if we're on the confirmation page for multiple sessions
+        wait_and_click(&c, "#btnContinue", Duration::from_secs(10)).await;
+    } else {
+        println!("KUVPN_USERNAME and/or KUVPN_PASSWORD not set. Skipping login process.");
+    }
+
+    // Continue with the rest of the function (cookie checking, etc.)
     loop {
         let script = "return document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
         let result = c.execute(script, vec![]).await?;
@@ -73,6 +125,7 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
         let dsid_cookie = result.as_str().map(|s| s.to_string());
 
         if let Some(cookie_value) = dsid_cookie {
+            // Close the WebDriver client immediately
             c.close().await?;
 
             println!("DSID cookie found: {}", cookie_value);
@@ -83,15 +136,56 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
             );
             println!("Executing: {}", openconnect_command);
 
+            // Use std::process::Command to execute openconnect
             use std::process::Command as StdCommand;
             StdCommand::new("sh")
                 .arg("-c")
                 .arg(openconnect_command)
-                .status()
+                .spawn() // Use spawn instead of status
                 .map_err(DriverError::ProcessStartError)?;
-            break;
-        }
-    }
 
-    Ok(())
+            // Return immediately after starting the openconnect process
+            return Ok(());
+        }
+
+        // Add a short delay before checking again to avoid tight looping
+        sleep(Duration::from_millis(100)).await;
+    }
+}
+
+async fn wait_and_send_keys(
+    c: &fantoccini::Client,
+    selector: &str,
+    keys: &str,
+    timeout: Duration,
+) -> bool {
+    let start_time = std::time::Instant::now();
+    while start_time.elapsed() < timeout {
+        match c.find(fantoccini::Locator::Css(selector)).await {
+            Ok(element) => {
+                if let Ok(_) = element.send_keys(keys).await {
+                    return true;
+                }
+            }
+            Err(_) => {}
+        }
+        sleep(Duration::from_millis(150)).await;
+    }
+    false
+}
+
+async fn wait_and_click(c: &fantoccini::Client, selector: &str, timeout: Duration) -> bool {
+    let start_time = std::time::Instant::now();
+    while start_time.elapsed() < timeout {
+        match c.find(fantoccini::Locator::Css(selector)).await {
+            Ok(element) => {
+                if let Ok(_) = element.click().await {
+                    return true;
+                }
+            }
+            Err(_) => {}
+        }
+        sleep(Duration::from_millis(500)).await;
+    }
+    false
 }

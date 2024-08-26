@@ -120,7 +120,7 @@ That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 
 ## TODO List
 
-- [ ] Add automatic typing of email and password via environment variable as well as clicking next
+- [x] Add automatic typing of email and password via environment variable as well as clicking next
 - [x] Add Nix build for more reliable building
 - [ ] Create AppImage
 - [ ] Create another version with an embedded browser for those who prefer
