@@ -60,9 +60,6 @@ async fn main() -> Result<(), DriverError> {
 }
 
 async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
-    let raw_username = env::var("KUVPN_USERNAME");
-    let raw_password = env::var("KUVPN_PASSWORD");
-
     let c = ClientBuilder::rustls()?
         .connect(&format!("http://localhost:{}", port))
         .await
@@ -70,10 +67,26 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
 
     c.goto(&url).await?;
 
-    if let (Ok(username), Ok(password)) = (raw_username, raw_password) {
+    perform_autologin(&c).await?;
+
+    if let Some(cookie_value) = get_dsid_cookie(&c).await? {
+        // Close the WebDriver client immediately
+        c.close().await?;
+
+        println!("DSID cookie found: {}", cookie_value);
+        execute_openconnect(cookie_value)?;
+        
+        return Ok(());
+    }
+
+    Ok(())
+}
+
+async fn perform_autologin(c: &fantoccini::Client) -> Result<(), DriverError> {
+    if let (Ok(username), Ok(password)) = (env::var("KUVPN_USERNAME"), env::var("KUVPN_PASSWORD")) {
         // Wait for the email input field to appear and then fill it
         wait_and_send_keys(
-            &c,
+            c,
             "input[name='loginfmt']",
             &username,
             Duration::from_secs(10),
@@ -81,11 +94,11 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
         .await;
 
         // Click the "Next" button
-        wait_and_click(&c, "#idSIButton9", Duration::from_secs(10)).await;
+        wait_and_click(c, "#idSIButton9", Duration::from_secs(10)).await;
 
         // Wait for the password input field to appear and then fill it
         wait_and_send_keys(
-            &c,
+            c,
             "input[name='passwd']",
             &password,
             Duration::from_secs(10),
@@ -93,64 +106,51 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
         .await;
 
         // Click the "Sign in" button
-        wait_and_click(&c, "#idSIButton9", Duration::from_secs(10)).await;
+        wait_and_click(c, "#idSIButton9", Duration::from_secs(10)).await;
 
         // Click the "No: For Stay Signed in?" button as, it will not remember anyways
-        wait_and_click(&c, "#idSIButton9", Duration::from_secs(60)).await;
+        wait_and_click(c, "#idSIButton9", Duration::from_secs(60)).await;
 
         // Execute gowelcome(); until it fails or runs 2 times correctly
         let mut successful_executions = 0;
         while successful_executions < 2 {
             match c.execute("gowelcome();", vec![]).await {
-                Ok(_) => {
-                    successful_executions += 1;
-                }
-                Err(_) => {
-                    break;
-                }
+                Ok(_) => successful_executions += 1,
+                Err(_) => break,
             }
         }
 
-        // Check if we're on the confirmation page for multiple sessions
-        wait_and_click(&c, "#btnContinue", Duration::from_secs(10)).await;
+        // Check if we're on the confirmation page for multiple sessions TODO
+        // wait_and_click(c, "#btnContinue", Duration::from_secs(1)).await;
     } else {
         println!("KUVPN_USERNAME and/or KUVPN_PASSWORD not set. Skipping login process.");
     }
+    Ok(())
+}
 
-    // Continue with the rest of the function (cookie checking, etc.)
-    loop {
-        let script = "return document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
-        let result = c.execute(script, vec![]).await?;
+async fn get_dsid_cookie(c: &fantoccini::Client) -> Result<Option<String>, DriverError> {
+    let script = "return document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
+    let result = c.execute(script, vec![]).await?;
+    Ok(result.as_str().map(|s| s.to_string()))
+}
 
-        let dsid_cookie = result.as_str().map(|s| s.to_string());
+fn execute_openconnect(cookie_value: String) -> Result<(), DriverError> {
+    let openconnect_command = format!(
+        "sudo openconnect --protocol nc -C 'DSID={}' vpn.ku.edu.tr",
+        cookie_value
+    );
+    println!("Executing: {}", openconnect_command);
 
-        if let Some(cookie_value) = dsid_cookie {
-            // Close the WebDriver client immediately
-            c.close().await?;
-
-            println!("DSID cookie found: {}", cookie_value);
-
-            let openconnect_command = format!(
-                "sudo openconnect --protocol nc -C 'DSID={}' vpn.ku.edu.tr",
-                cookie_value
-            );
-            println!("Executing: {}", openconnect_command);
-
-            // Use std::process::Command to execute openconnect
-            use std::process::Command as StdCommand;
-            // Spawn the openconnect process in the background
-            StdCommand::new("sh")
-                .arg("-c")
-                .arg(&openconnect_command)
-                .status()
-                .map_err(DriverError::ProcessStartError)?;
-                        
-            return Ok(());
-        }
-
-        // Add a short delay before checking again to avoid tight looping
-        sleep(Duration::from_millis(100)).await;
-    }
+    // Use std::process::Command to execute openconnect
+    use std::process::Command as StdCommand;
+    // Spawn the openconnect process in the background
+    StdCommand::new("sh")
+        .arg("-c")
+        .arg(&openconnect_command)
+        .status()
+        .map_err(DriverError::ProcessStartError)?;
+    
+    Ok(())
 }
 
 async fn wait_and_send_keys(
