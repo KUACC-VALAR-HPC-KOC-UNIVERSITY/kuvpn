@@ -3,6 +3,7 @@ use fantoccini::ClientBuilder;
 use std::net::TcpListener;
 use std::process::Stdio;
 use thiserror::Error;
+use tokio::net::TcpStream;
 use tokio::process::{Child, Command};
 use tokio::time::{sleep, Duration};
 
@@ -51,8 +52,6 @@ impl Driver {
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
 
-                sleep(Duration::from_secs(2)).await; // Delay before retrying
-
                 Ok(Driver {
                     process: Some(process),
                 })
@@ -65,8 +64,6 @@ impl Driver {
                     .stderr(Stdio::piped())
                     .spawn()
                     .map_err(DriverError::ProcessStartError)?;
-
-                sleep(Duration::from_secs(2)).await; // Delay before retrying
 
                 Ok(Driver {
                     process: Some(process),
@@ -113,9 +110,23 @@ struct Args {
 async fn main() -> Result<(), DriverError> {
     let args = Args::parse();
 
-    let mut attempt_count = 0;
     let mut driver = Driver::start(args.browser.clone(), args.port).await?;
 
+    // Wait until the WebDriver is reachable
+    let address = format!("127.0.0.1:{}", args.port);
+    loop {
+        match TcpStream::connect(&address).await {
+            Ok(_) => {
+                println!("Webdriver is up on: {}.", args.port);
+                break;
+            }
+            Err(_) => {
+                sleep(Duration::from_millis(100)).await;
+            }
+        }
+    }
+
+    let mut attempt_count = 0;
     loop {
         match run_client(args.url.clone(), args.port).await {
             Ok(_) => break,
