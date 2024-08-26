@@ -5,7 +5,6 @@ use args::Args;
 use clap::Parser;
 use driver::{Driver, DriverError};
 use fantoccini::ClientBuilder;
-use tokio::net::TcpStream;
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
@@ -14,19 +13,10 @@ async fn main() -> Result<(), DriverError> {
 
     let mut driver = Driver::start(args.browser.clone(), &mut args.port).await?;
 
-    // Wait until the WebDriver is reachable
-    let address = format!("127.0.0.1:{}", args.port);
-    loop {
-        match TcpStream::connect(&address).await {
-            Ok(_) => {
-                println!("Webdriver is up on: {}.", args.port);
-                break;
-            }
-            Err(_) => {
-                sleep(Duration::from_millis(100)).await;
-            }
-        }
-    }
+    // Wait for the WebDriver to be reachable
+    driver
+        .wait_for_webdriver(args.port, Duration::from_secs(30))
+        .await?;
 
     let mut attempt_count = 0;
     loop {
@@ -57,6 +47,9 @@ async fn main() -> Result<(), DriverError> {
                         e
                     );
                     return Err(DriverError::ProcessStartError(e)); // Exit on process start error
+                }
+                DriverError::WebDriverStartTimeout => {
+                    return Err(DriverError::WebDriverStartTimeout);
                 }
             },
         }

@@ -1,7 +1,9 @@
 use std::net::TcpListener;
 use std::process::Stdio;
 use thiserror::Error;
+use tokio::net::TcpStream;
 use tokio::process::{Child, Command};
+use tokio::time::{sleep, timeout, Duration};
 
 use crate::args::Browser;
 
@@ -26,6 +28,8 @@ pub enum DriverError {
     WebDriverConnectionError(#[from] fantoccini::error::CmdError),
     #[error("Failed to build client {0}")]
     WebDriverClientError(#[from] fantoccini::error::NewSessionError),
+    #[error("WebDriver failed to start within the timeout period")]
+    WebDriverStartTimeout,
 }
 
 impl Driver {
@@ -80,6 +84,28 @@ impl Driver {
                     port = port.wrapping_add(1);
                 }
             }
+        }
+    }
+
+    pub async fn wait_for_webdriver(
+        &self,
+        port: u16,
+        timeout_duration: Duration,
+    ) -> Result<(), DriverError> {
+        let address = format!("127.0.0.1:{}", port);
+        match timeout(timeout_duration, async {
+            loop {
+                if TcpStream::connect(&address).await.is_ok() {
+                    println!("WebDriver is up on port: {}.", port);
+                    return Ok(());
+                }
+                sleep(Duration::from_millis(100)).await;
+            }
+        })
+        .await
+        {
+            Ok(result) => result,
+            Err(_) => Err(DriverError::WebDriverStartTimeout),
         }
     }
 }
