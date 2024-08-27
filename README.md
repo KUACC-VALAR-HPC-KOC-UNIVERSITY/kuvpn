@@ -124,6 +124,9 @@ That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 - [x] Add Nix build for more reliable building
 - [ ] Create AppImage
 - [ ] Create another version with an embedded browser for those who prefer
+- [ ] Add debug mode
+- [ ] Write features on README
+- [ ] Explain how to use env varibles for auto-login
 
 ## Contributing
 
