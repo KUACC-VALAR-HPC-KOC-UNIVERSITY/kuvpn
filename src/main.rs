@@ -25,7 +25,7 @@ async fn main() -> Result<(), DriverError> {
             Ok(_) => break,
             Err(err) => match err {
                 DriverError::WebDriverConnectionError(e) => {
-                    println!("WebDriverConnectionError encountered: {:#?}. Retrying...", e);
+                    println!("WebDriverConnectionError encountered: {}. Retrying...", e);
                     attempt_count += 1;
                     if attempt_count > 3 {
                         println!("Exceeded maximum retry attempts for WebDriver connection.");
@@ -85,7 +85,7 @@ async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
 
         println!("DSID cookie found: {}", cookie_value);
         execute_openconnect(cookie_value)?;
-        
+
         return Ok(());
     }
 
@@ -96,7 +96,9 @@ async fn perform_autologin(c: &fantoccini::Client) -> Result<Option<String>, Dri
     let (username, password) = match (env::var("KUVPN_USERNAME"), env::var("KUVPN_PASSWORD")) {
         (Ok(u), Ok(p)) if !u.is_empty() && !p.is_empty() => (u, p),
         _ => {
-            println!("KUVPN_USERNAME and/or KUVPN_PASSWORD not set or empty. Skipping login process.");
+            println!(
+                "KUVPN_USERNAME and/or KUVPN_PASSWORD not set or empty. Skipping login process."
+            );
             return Ok(None);
         }
     };
@@ -108,7 +110,8 @@ async fn perform_autologin(c: &fantoccini::Client) -> Result<Option<String>, Dri
         &username,
         Duration::from_secs(10),
     )
-    .await? {
+    .await?
+    {
         WaitRes::FoundCookie(cookie) => return Ok(Some(cookie)),
         _ => {}
     }
@@ -126,7 +129,8 @@ async fn perform_autologin(c: &fantoccini::Client) -> Result<Option<String>, Dri
         &password,
         Duration::from_secs(10),
     )
-    .await? {
+    .await?
+    {
         WaitRes::FoundCookie(cookie) => return Ok(Some(cookie)),
         _ => {}
     }
@@ -162,7 +166,8 @@ async fn perform_autologin(c: &fantoccini::Client) -> Result<Option<String>, Dri
 }
 
 async fn get_dsid_cookie(c: &fantoccini::Client) -> Result<Option<String>, DriverError> {
-    let script = "return document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
+    let script =
+        "return document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
     let result = c.execute(script, vec![]).await?;
     Ok(result.as_str().map(|s| s.to_string()))
 }
@@ -182,7 +187,7 @@ fn execute_openconnect(cookie_value: String) -> Result<(), DriverError> {
         .arg(&openconnect_command)
         .status()
         .map_err(DriverError::ProcessStartError)?;
-    
+
     Ok(())
 }
 
@@ -216,7 +221,9 @@ async fn wait_and_send_keys(
                 if e.error == ErrorStatus::NoSuchElement || e.error == ErrorStatus::NoSuchWindow {
                     continue;
                 } else {
-                    return Err(driver::DriverError::WebDriverConnectionError(fantoccini::error::CmdError::Standard(e)));
+                    return Err(driver::DriverError::WebDriverConnectionError(
+                        fantoccini::error::CmdError::Standard(e),
+                    ));
                 }
             }
             Err(e) => return Err(driver::DriverError::WebDriverConnectionError(e)),
@@ -226,7 +233,11 @@ async fn wait_and_send_keys(
     Ok(WaitRes::TimeOut)
 }
 
-async fn wait_and_click(c: &fantoccini::Client, selector: &str, timeout: Duration) -> Result<WaitRes, DriverError> {
+async fn wait_and_click(
+    c: &fantoccini::Client,
+    selector: &str,
+    timeout: Duration,
+) -> Result<WaitRes, DriverError> {
     let start_time = std::time::Instant::now();
     while start_time.elapsed() < timeout {
         if let Some(cookie) = get_dsid_cookie(c).await? {
@@ -245,7 +256,9 @@ async fn wait_and_click(c: &fantoccini::Client, selector: &str, timeout: Duratio
                 if e.error == ErrorStatus::NoSuchElement || e.error == ErrorStatus::NoSuchWindow {
                     continue;
                 } else {
-                    return Err(driver::DriverError::WebDriverConnectionError(fantoccini::error::CmdError::Standard(e)));
+                    return Err(driver::DriverError::WebDriverConnectionError(
+                        fantoccini::error::CmdError::Standard(e),
+                    ));
                 }
             }
             Err(e) => return Err(driver::DriverError::WebDriverConnectionError(e)),
