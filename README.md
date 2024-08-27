@@ -48,7 +48,7 @@ KUVPN supports automatic login by using environment variables to store your emai
    You need to set two environment variables: `KUVPN_EMAIL` and `KUVPN_PASSWORD`. You can do this by adding the following lines to your shell profile file (e.g., `.bashrc`, `.zshrc`, etc.):
 
    ```bash
-   export KUVPN_EMAIL="your-email@example.com"
+   export KUVPN_USERNAME="your-email@example.com"
    export KUVPN_PASSWORD="your-password"
    ```
 
