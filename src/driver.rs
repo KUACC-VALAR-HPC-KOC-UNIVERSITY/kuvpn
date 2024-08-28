@@ -5,8 +5,6 @@ use tokio::net::TcpStream;
 use tokio::process::{Child, Command};
 use tokio::time::{sleep, timeout, Duration};
 
-use crate::args::Browser;
-
 pub struct Driver {
     process: Option<Child>,
 }
@@ -33,39 +31,21 @@ pub enum DriverError {
 }
 
 impl Driver {
-    pub async fn start(browser: Browser, port: &mut u16) -> Result<Driver, DriverError> {
+    pub async fn start(port: &mut u16) -> Result<Driver, DriverError> {
         *port = Driver::find_available_port(*port).await;
         println!("Using port: {}", *port);
 
-        match browser {
-            Browser::Chrome => {
-                let process = Command::new("chromedriver")
-                    .arg(format!("--port={}", port))
-                    .stdin(Stdio::null())
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
-                    .spawn()
-                    .map_err(DriverError::ProcessStartError)?;
+        let process = Command::new("chromedriver")
+            .arg(format!("--port={}", port))
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(DriverError::ProcessStartError)?;
 
-                Ok(Driver {
-                    process: Some(process),
-                })
-            }
-            Browser::Gecko => {
-                let process = Command::new("geckodriver")
-                    .arg(format!("--port={}", port))
-                    .stdin(Stdio::null())
-                    .stdout(Stdio::piped())
-                    .stderr(Stdio::piped())
-                    .spawn()
-                    .map_err(DriverError::ProcessStartError)?;
-
-                Ok(Driver {
-                    process: Some(process),
-                })
-            }
-            Browser::None => Ok(Driver { process: None }),
-        }
+        Ok(Driver {
+            process: Some(process),
+        })
     }
 
     async fn find_available_port(mut port: u16) -> u16 {

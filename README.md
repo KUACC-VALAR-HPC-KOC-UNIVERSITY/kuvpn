@@ -12,9 +12,11 @@ Ensure you have the following installed on your system:
 
 1. **Rust and Cargo**: Install Rust and Cargo using [rustup](https://rustup.rs/).
 
-2. **ChromeDriver or GeckoDriver**:
-   - **ChromeDriver**: Required if you choose to use the Chrome browser.
-   - **GeckoDriver**: Required if you choose to use the Gecko browser (Firefox).
+2. **ChromeDriver**:
+   - **ChromeDriver**: Install from package manager or website (together with chromium/chrome)
+
+3. **openconnect**:
+   - **openconnect**: Most likely will already be installed, can usaully be installed with system package manager.
 
 ### Installation
 
@@ -31,19 +33,11 @@ Run the program with default parameters:
 kuvpn
 ```
 
-Or specify the URL, browser, and port:
+Or specify the URL or and port for chromedriver:
 
 ```bash
-kuvpn --url https://vpn.ku.edu.tr --browser gecko --port 9515
+kuvpn --url https://vpn.ku.edu.tr --port 9515
 ```
-
-### Example
-
-```bash
-kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
-```
-
-This command will start the Chrome WebDriver, navigate to the specified URL, retrieve the DSID cookie, and construct the OpenConnect command.
 
 ### Command Line Options
 
@@ -54,7 +48,6 @@ Usage: kuvpn [OPTIONS]
 
 Options:
   -u, --url <URL>          URL to visit [default: https://vpn.ku.edu.tr]
-  -b, --browser <BROWSER>  Browser to use [default: chrome] [possible values: chrome, gecko, none]
   -p, --port <PORT>        Port to use for WebDriver [default: 9515]
   -h, --help               Print help
   -V, --version            Print version
@@ -113,17 +106,19 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    Or, if you want to customize the connection parameters, use:
 
    ```bash
-   kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
+   kuvpn --url https://vpn.ku.edu.tr --port 9515
    ```
 
 That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 
 ## TODO List
 
-- [ ] Add automatic typing of email and password via environment variable as well as clicking next
 - [x] Add Nix build for more reliable building
+- [x] Can remember session
 - [ ] Create AppImage
 - [ ] Create another version with an embedded browser for those who prefer
+- [ ] Add debug mode
+- [ ] Write features on README
 
 ## Contributing
 
