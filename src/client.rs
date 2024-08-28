@@ -92,7 +92,7 @@ pub async fn run_client_with_retries(
                 } else if let DriverError::WebDriverClientError(e) = err {
                     if let fantoccini::error::NewSessionError::SessionNotCreated(e) = &e {
                         if let fantoccini::error::ErrorStatus::SessionNotCreated = e.error {
-                            eprintln!("Please install one of the following browsers: chromium, google-chrome, google-chrome-stable, google-chrome-beta, or google-chrome-unstable.");
+                            eprintln!("Please make sure you have the chrome/ium installed: \nError: {e:#?}");
                             std::process::exit(1);
                         }
                     }
