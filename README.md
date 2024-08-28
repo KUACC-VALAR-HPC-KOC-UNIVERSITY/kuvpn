@@ -72,9 +72,15 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
 
 1. **Install Rust and Cargo using rustup**:
 
-   To install Rust and Cargo, you will use the rustup script. Open a terminal and run:
+   To install Rust & GCC and Cargo, you will use the rustup script. Open a terminal and run:
 
    ```bash
+   sudo apt install curl gcc
+   ```
+
+   You will also need curl to run the command.
+
+   ```
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
