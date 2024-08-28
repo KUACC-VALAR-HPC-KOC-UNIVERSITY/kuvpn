@@ -106,7 +106,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    Or, if you want to customize the connection parameters, use:
 
    ```bash
-   kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
+   kuvpn --url https://vpn.ku.edu.tr --port 9515
    ```
 
 That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
@@ -114,6 +114,7 @@ That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 ## TODO List
 
 - [x] Add Nix build for more reliable building
+- [x] Can remember session
 - [ ] Create AppImage
 - [ ] Create another version with an embedded browser for those who prefer
 - [ ] Add debug mode
