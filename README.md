@@ -39,55 +39,6 @@ Or specify the URL or and port for chromedriver:
 kuvpn --url https://vpn.ku.edu.tr --port 9515
 ```
 
-#### Using Environment Variables for Auto-Login
-
-KUVPN supports automatic login by using environment variables to store your email and password. This feature allows the program to automatically fill in your credentials and proceed with the login process.
-
-##### Setting Up Environment Variables
-
-1. **Set the Environment Variables**:
-
-   You need to set two environment variables: `KUVPN_EMAIL` and `KUVPN_PASSWORD`. You can do this by adding the following lines to your shell profile file (e.g., `.bashrc`, `.zshrc`, etc.):
-
-   ```bash
-   export KUVPN_USERNAME="your-email@example.com"
-   export KUVPN_PASSWORD="your-password"
-   ```
-
-   Replace `"your-email@example.com"` and `"your-password"` with your actual email and password.
-
-2. **Reload Your Shell Profile**:
-
-   After adding the environment variables, reload your shell profile to apply the changes:
-
-   ```bash
-   source ~/.bashrc  # or source ~/.zshrc
-   ```
-
-#### Running KUVPN with Auto-Login
-
-Once the environment variables are set, you can run KUVPN as usual, and it will automatically use the provided email and password for the login process:
-
-```bash
-kuvpn
-```
-
-Or with custom parameters:
-
-```bash
-kuvpn --url https://vpn.ku.edu.tr --port 9515
-```
-
-That's it! KUVPN will now handle the login process automatically using the credentials stored in the environment variables.
-
-### Example
-
-```bash
-kuvpn --url https://vpn.ku.edu.tr --port 9515
-```
-
-This command will start the Chrome WebDriver, navigate to the specified URL, retrieve the DSID cookie, and construct the OpenConnect command.
-
 ### Command Line Options
 
 ```
@@ -162,13 +113,11 @@ That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 
 ## TODO List
 
-- [x] Add automatic typing of email and password via environment variable as well as clicking next
 - [x] Add Nix build for more reliable building
 - [ ] Create AppImage
 - [ ] Create another version with an embedded browser for those who prefer
 - [ ] Add debug mode
 - [ ] Write features on README
-- [x] Explain how to use env varibles for auto-login
 
 ## Contributing
 

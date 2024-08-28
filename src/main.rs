@@ -1,9 +1,7 @@
 mod args;
 mod client;
 mod driver;
-mod login;
 mod utils;
-mod wait;
 
 use args::Args;
 use clap::Parser;

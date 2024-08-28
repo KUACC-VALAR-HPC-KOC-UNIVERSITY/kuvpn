@@ -1,6 +1,5 @@
 use crate::args::Args;
 use crate::driver::{Driver, DriverError};
-use crate::login::perform_autologin;
 use crate::utils::{execute_openconnect, get_dsid_cookie, skip_host_checker};
 use fantoccini::ClientBuilder;
 use serde_json;
@@ -11,7 +10,6 @@ pub async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
     client.goto(&url).await?;
 
     skip_host_checker(&client).await;
-    perform_autologin(&client).await?;
 
     if let Some(cookie_value) = get_dsid_cookie_with_retries(&client).await? {
         client.close().await?;
@@ -60,7 +58,9 @@ async fn setup_client(port: u16) -> Result<fantoccini::Client, DriverError> {
     Ok(client)
 }
 
-async fn get_dsid_cookie_with_retries(client: &fantoccini::Client) -> Result<Option<String>, DriverError> {
+async fn get_dsid_cookie_with_retries(
+    client: &fantoccini::Client,
+) -> Result<Option<String>, DriverError> {
     let start_time = std::time::Instant::now();
     while start_time.elapsed() < Duration::from_secs(30) {
         if let Some(value) = get_dsid_cookie(client).await? {
@@ -71,7 +71,10 @@ async fn get_dsid_cookie_with_retries(client: &fantoccini::Client) -> Result<Opt
     Ok(None)
 }
 
-pub async fn run_client_with_retries(mut driver: Driver, args: &mut Args) -> Result<(), DriverError> {
+pub async fn run_client_with_retries(
+    mut driver: Driver,
+    args: &mut Args,
+) -> Result<(), DriverError> {
     let mut attempt_count = 0;
     loop {
         match run_client(args.url.clone(), args.port).await {
