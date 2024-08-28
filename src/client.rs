@@ -29,12 +29,13 @@ async fn setup_client(port: u16) -> Result<fantoccini::Client, DriverError> {
 
     let mut capabilities = serde_json::Map::new();
 
-    // Add Chrome options for kiosk mode and custom profile directory
     let mut chrome_options = serde_json::Map::new();
     chrome_options.insert(
         "args".to_string(),
         serde_json::Value::Array(vec![
-            serde_json::Value::String("--kiosk".to_string()),
+            serde_json::Value::String(
+                "--app=data:text/html,<html><body></body></html>".to_string(),
+            ),
             serde_json::Value::String(format!("--user-data-dir={}", chrome_profile_path_str)),
         ]),
     );
