@@ -8,6 +8,17 @@ pub async fn get_dsid_cookie(c: &Client) -> Result<Option<String>, DriverError> 
     Ok(result.as_str().map(|s| s.to_string()))
 }
 
+pub async fn skip_host_checker(c: &Client) {
+    // Execute gowelcome(); until it fails or runs 2 times correctly
+    let mut successful_executions = 0;
+    while successful_executions < 3 {
+        match c.execute("gowelcome();", vec![]).await {
+            Ok(_) => successful_executions += 1,
+            Err(_) => break,
+        }
+    }
+}
+
 pub fn execute_openconnect(cookie_value: String) -> Result<(), DriverError> {
     let openconnect_command = format!(
         "sudo openconnect --protocol nc -C 'DSID={}' vpn.ku.edu.tr",

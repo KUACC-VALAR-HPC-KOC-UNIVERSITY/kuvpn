@@ -1,4 +1,5 @@
 use crate::driver::DriverError;
+use crate::utils::skip_host_checker;
 use crate::wait::{wait_and_click, wait_and_send_keys, WaitRes};
 use fantoccini::Client;
 use std::env;
@@ -59,14 +60,7 @@ pub async fn perform_autologin(c: &Client) -> Result<Option<String>, DriverError
         _ => {}
     }
 
-    // Execute gowelcome(); until it fails or runs 2 times correctly
-    let mut successful_executions = 0;
-    while successful_executions < 2 {
-        match c.execute("gowelcome();", vec![]).await {
-            Ok(_) => successful_executions += 1,
-            Err(_) => break,
-        }
-    }
+    skip_host_checker(c).await;
 
     // Check if we're on the confirmation page for multiple sessions
     match wait_and_click(c, "#btnContinue", Duration::from_secs(30)).await? {

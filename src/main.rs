@@ -12,9 +12,33 @@ use tokio::time::{sleep, Duration};
 
 #[tokio::main]
 async fn main() -> Result<(), DriverError> {
+    // Check if chromedriver & openconnect are installed
+    let chromedriver_installed = std::process::Command::new("which")
+        .arg("chromedriver")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false);
+
+    let openconnect_installed = std::process::Command::new("which")
+        .arg("openconnect")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false);
+
+    if !chromedriver_installed || !openconnect_installed {
+        eprintln!("Error: Required dependencies are not installed.");
+        if !chromedriver_installed {
+            eprintln!("Please install chromedriver.");
+        }
+        if !openconnect_installed {
+            eprintln!("Please install openconnect.");
+        }
+        std::process::exit(1);
+    }
+
     let mut args = Args::parse();
 
-    let mut driver = Driver::start(args.browser.clone(), &mut args.port).await?;
+    let mut driver = Driver::start(&mut args.port).await?;
 
     // Wait for the WebDriver to be reachable
     driver
@@ -41,7 +65,7 @@ async fn main() -> Result<(), DriverError> {
                         e
                     );
                     drop(driver); // Drop the current driver to kill the process
-                    driver = Driver::start(args.browser.clone(), &mut args.port).await?; // Restart driver
+                    driver = Driver::start(&mut args.port).await?; // Restart driver
                     attempt_count = 0; // Reset attempt count after restarting
                 }
                 DriverError::ProcessStartError(e) => {
