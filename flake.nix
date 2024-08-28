@@ -50,13 +50,15 @@
             pkgs.rustc
             pkgs.rustfmt
             pkgs.cargo
+            pkgs.chromedriver
+            pkgs.openconnect
+            pkgs.chromium # or pkgs.google-chrome, pkgs.google-chrome-stable, pkgs.google-chrome-beta, pkgs.google-chrome-unstable
           ];
 
-          # Include chromium and chromedriver only if needed in devShell
           nativeBuildInputs = [
             pkgs.rust-analyzer
             pkgs.lldb_18
-          ] ++ (if pkgs ? chromium && pkgs ? chromedriver then [ pkgs.chromium pkgs.chromedriver ] else []);
+          ];
         };
 
         # To run your package using `nix run`
