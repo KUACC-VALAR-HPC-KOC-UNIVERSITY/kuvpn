@@ -15,7 +15,7 @@ Ensure you have the following installed on your system:
 2. **ChromeDriver**:
    - **ChromeDriver**: Install from package manager or website (together with chromium/chrome)
 
-3. **openconnect**:
+3. **Openconnect**:
    - **openconnect**: Most likely will already be installed, can usaully be installed with system package manager.
 
 ### Installation
