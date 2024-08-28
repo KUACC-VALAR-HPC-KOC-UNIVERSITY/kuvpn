@@ -12,9 +12,11 @@ Ensure you have the following installed on your system:
 
 1. **Rust and Cargo**: Install Rust and Cargo using [rustup](https://rustup.rs/).
 
-2. **ChromeDriver or GeckoDriver**:
-   - **ChromeDriver**: Required if you choose to use the Chrome browser.
-   - **GeckoDriver**: Required if you choose to use the Gecko browser (Firefox).
+2. **ChromeDriver**:
+   - **ChromeDriver**: Install from package manager or website (together with chromium/chrome)
+
+3. **openconnect**:
+   - **openconnect**: Most likely will already be installed, can usaully be installed with system package manager.
 
 ### Installation
 
@@ -31,10 +33,10 @@ Run the program with default parameters:
 kuvpn
 ```
 
-Or specify the URL, browser, and port:
+Or specify the URL or and port for chromedriver:
 
 ```bash
-kuvpn --url https://vpn.ku.edu.tr --browser gecko --port 9515
+kuvpn --url https://vpn.ku.edu.tr --port 9515
 ```
 
 #### Using Environment Variables for Auto-Login
@@ -73,7 +75,7 @@ kuvpn
 Or with custom parameters:
 
 ```bash
-kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
+kuvpn --url https://vpn.ku.edu.tr --port 9515
 ```
 
 That's it! KUVPN will now handle the login process automatically using the credentials stored in the environment variables.
@@ -81,7 +83,7 @@ That's it! KUVPN will now handle the login process automatically using the crede
 ### Example
 
 ```bash
-kuvpn --url https://vpn.ku.edu.tr --browser chrome --port 9515
+kuvpn --url https://vpn.ku.edu.tr --port 9515
 ```
 
 This command will start the Chrome WebDriver, navigate to the specified URL, retrieve the DSID cookie, and construct the OpenConnect command.
@@ -95,7 +97,6 @@ Usage: kuvpn [OPTIONS]
 
 Options:
   -u, --url <URL>          URL to visit [default: https://vpn.ku.edu.tr]
-  -b, --browser <BROWSER>  Browser to use [default: chrome] [possible values: chrome, gecko, none]
   -p, --port <PORT>        Port to use for WebDriver [default: 9515]
   -h, --help               Print help
   -V, --version            Print version
