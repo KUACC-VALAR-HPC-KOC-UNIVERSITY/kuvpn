@@ -36,6 +36,10 @@
           # Explicitly set environment variables for pkg-config
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
 
+          postPatch = ''
+            substituteInPlace src/driver.rs --replace "chromedriver" "${pkgs.chromedriver}/bin/chromedriver"
+          '';
+
           meta = with lib; {
             description = "KUVPN - A Rust-based VPN application";
             license = licenses.mit;
@@ -52,7 +56,7 @@
             pkgs.cargo
             pkgs.chromedriver
             pkgs.openconnect
-            pkgs.chromium # or pkgs.google-chrome, pkgs.google-chrome-stable, pkgs.google-chrome-beta, pkgs.google-chrome-unstable
+            pkgs.chromium 
           ];
 
           nativeBuildInputs = [
@@ -67,7 +71,6 @@
           program = "${self.packages.${system}.default}/bin/kuvpn";
         };
 
-        # Define Chromium and Chromedriver as apps
         apps.chromium = {
           type = "app";
           program = "${pkgs.chromium}/bin/chromium";
