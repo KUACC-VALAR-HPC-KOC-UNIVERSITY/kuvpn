@@ -6,12 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -56,20 +51,21 @@
             pkgs.rustfmt
             pkgs.cargo
           ];
-          # Runtime dependencies for the shell environment
+
+          # Include chromium and chromedriver only if needed in devShell
           nativeBuildInputs = [
             pkgs.rust-analyzer
             pkgs.lldb_18
-            pkgs.chromium
-            pkgs.chromedriver
-          ];
+          ] ++ (if pkgs ? chromium && pkgs ? chromedriver then [ pkgs.chromium pkgs.chromedriver ] else []);
         };
 
         # To run your package using `nix run`
         apps.default = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/kuvpn";
-          runtimeDependencies = [
+
+          # Conditionally include runtime dependencies
+          runtimeDependencies = lib.optionals (lib.any (dep: pkgs ? dep) [ "chromium" "chromedriver" ]) [
             pkgs.chromium
             pkgs.chromedriver
           ];
