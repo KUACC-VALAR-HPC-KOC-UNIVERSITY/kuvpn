@@ -80,8 +80,8 @@ pub async fn run_client_with_retries(
     loop {
         match run_client(args.url.clone(), args.port).await {
             Ok(_) => break,
-            Err(err) => match err {
-                DriverError::WebDriverConnectionError(e) => {
+            Err(err) => {
+                if let DriverError::WebDriverConnectionError(e) = err {
                     println!("WebDriverConnectionError encountered: {}. Retrying...", e);
                     attempt_count += 1;
                     if attempt_count > 3 {
@@ -89,8 +89,13 @@ pub async fn run_client_with_retries(
                         return Err(DriverError::WebDriverConnectionError(e));
                     }
                     sleep(Duration::from_secs(2)).await; // Delay before retrying
-                }
-                DriverError::WebDriverClientError(e) => {
+                } else if let DriverError::WebDriverClientError(e) = err {
+                    if let fantoccini::error::NewSessionError::SessionNotCreated(e) = &e {
+                        if let fantoccini::error::ErrorStatus::SessionNotCreated = e.error {
+                            eprintln!("Please install one of the following browsers: chromium, google-chrome, google-chrome-stable, google-chrome-beta, or google-chrome-unstable.");
+                            std::process::exit(1);
+                        }
+                    }
                     println!(
                         "WebDriverClientError encountered: {}. Restarting driver...",
                         e
@@ -100,20 +105,19 @@ pub async fn run_client_with_retries(
                     // Restart driver
                     driver = Driver::start(&mut args.port).await?;
                     attempt_count = 0; // Reset attempt count after restarting
-                }
-                DriverError::ProcessStartError(e) => {
+                } else if let DriverError::ProcessStartError(e) = err {
                     println!(
                         "ProcessStartError encountered: {}. Stopping application.",
                         e
                     );
                     return Err(DriverError::ProcessStartError(e)); // Exit on process start error
-                }
-                DriverError::WebDriverStartTimeout => {
+                } else if let DriverError::WebDriverStartTimeout = err {
                     return Err(DriverError::WebDriverStartTimeout);
                 }
-            },
+            }
         }
     }
 
     Ok(())
 }
+

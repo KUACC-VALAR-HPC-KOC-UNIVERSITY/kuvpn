@@ -32,52 +32,14 @@ pub fn check_dependencies() -> Result<(), DriverError> {
         .map(|output| output.status.success())
         .unwrap_or(false);
 
-    let chromium_installed = std::process::Command::new("which")
-        .arg("chromium")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
 
-    let google_chrome_installed = std::process::Command::new("which")
-        .arg("google-chrome")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
-    let google_chrome_stable_installed = std::process::Command::new("which")
-        .arg("google-chrome-stable")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
-    let google_chrome_beta_installed = std::process::Command::new("which")
-        .arg("google-chrome-beta")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
-    let google_chrome_unstable_installed = std::process::Command::new("which")
-        .arg("google-chrome-unstable")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false);
-
-    let browser_installed = chromium_installed
-        || google_chrome_installed
-        || google_chrome_stable_installed
-        || google_chrome_beta_installed
-        || google_chrome_unstable_installed;
-
-    if !chromedriver_installed || !openconnect_installed || !browser_installed {
+    if !chromedriver_installed || !openconnect_installed {
         eprintln!("Error: Required dependencies are not installed.");
         if !chromedriver_installed {
             eprintln!("Please install chromedriver.");
         }
         if !openconnect_installed {
             eprintln!("Please install openconnect.");
-        }
-        if !browser_installed {
-            eprintln!("Please install one of the following browsers: chromium, google-chrome, google-chrome-stable, google-chrome-beta, or google-chrome-unstable.");
         }
         std::process::exit(1);
     }
