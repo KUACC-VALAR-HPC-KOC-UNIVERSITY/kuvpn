@@ -65,12 +65,17 @@
         apps.default = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/kuvpn";
+        };
 
-          # Conditionally include runtime dependencies
-          runtimeDependencies = lib.optionals (lib.any (dep: pkgs ? dep) [ "chromium" "chromedriver" ]) [
-            pkgs.chromium
-            pkgs.chromedriver
-          ];
+        # Define Chromium and Chromedriver as apps
+        apps.chromium = {
+          type = "app";
+          program = "${pkgs.chromium}/bin/chromium";
+        };
+
+        apps.chromedriver = {
+          type = "app";
+          program = "${pkgs.chromedriver}/bin/chromedriver";
         };
       }
     );
