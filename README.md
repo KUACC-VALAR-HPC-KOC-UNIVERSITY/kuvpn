@@ -161,7 +161,6 @@ That's it! You're all set up and ready to use KUVPN on Ubuntu. Enjoy!
 ## TODO List
 
 - [ ] Create AppImage
-- [ ] Add debug mode
 
 ## Contributing
 
