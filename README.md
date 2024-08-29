@@ -10,6 +10,7 @@ KUVPN is a simple Rust program to retrieve the DSID cookie and execute the OpenC
 - [x] Customizable URL and port for ChromeDriver
 - [x] Remembers your login session safely
 - [x] Nix build for reliable building
+- [x] Logging for debugging tool
 
 ## Getting Started
 
@@ -56,10 +57,31 @@ Simple program to retrieve DSID cookie and execute OpenConnect command
 Usage: kuvpn [OPTIONS]
 
 Options:
-  -u, --url <URL>          URL to visit [default: https://vpn.ku.edu.tr]
-  -p, --port <PORT>        Port to use for WebDriver [default: 9515]
-  -h, --help               Print help
-  -V, --version            Print version
+  -u, --url <URL>
+          The URL to the page where we will start logging in and looking for DSID
+          
+          [default: https://vpn.ku.edu.tr]
+
+  -p, --port <PORT>
+          The port number for the ChromeDriver
+          
+          [default: 9515]
+
+  -l, --level <LEVEL>
+          The level of logging
+          
+          [default: info]
+
+          Possible values:
+          - info:       Informational messages
+          - debug:      Debugging messages
+          - stacktrace: Detailed stack trace messages
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+  -V, --version
+          Print version
 ```
 
 ## License
