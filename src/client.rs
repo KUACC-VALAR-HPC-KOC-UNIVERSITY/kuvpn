@@ -10,10 +10,11 @@ pub async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
     client.goto(&url).await?;
 
     skip_host_checker(&client).await;
+    log::debug!("Skipped host checker");
 
     if let Some(cookie_value) = get_dsid_cookie_with_retries(&client).await? {
         client.close().await?;
-        println!("DSID cookie found: {}", cookie_value);
+        log::info!("DSID cookie found: {}", cookie_value);
         execute_openconnect(cookie_value)?;
         return Ok(());
     }
@@ -56,6 +57,8 @@ async fn setup_client(port: u16) -> Result<fantoccini::Client, DriverError> {
         .await
         .map_err(DriverError::WebDriverClientError)?;
 
+    log::debug!("Started brwoser");
+
     Ok(client)
 }
 
@@ -63,12 +66,15 @@ async fn get_dsid_cookie_with_retries(
     client: &fantoccini::Client,
 ) -> Result<Option<String>, DriverError> {
     let start_time = std::time::Instant::now();
-    while start_time.elapsed() < Duration::from_secs(30) {
+    log::debug!("Starting to look for dsid...");
+    while start_time.elapsed() < Duration::MAX {
         if let Some(value) = get_dsid_cookie(client).await? {
+            log::debug!("Found DSID");
             return Ok(Some(value));
         }
         sleep(Duration::from_millis(100)).await; // Wait before retrying
     }
+    log::debug!("Unable to find dsid");
     Ok(None)
 }
 
@@ -82,36 +88,46 @@ pub async fn run_client_with_retries(
             Ok(_) => break,
             Err(err) => {
                 if let DriverError::WebDriverConnectionError(e) = err {
-                    println!("WebDriverConnectionError encountered: {}. Retrying...", e);
+                    log::warn!("WebDriverConnectionError encountered: {}. Retrying...", e);
+                    log::trace!("{:#?}", e);
                     attempt_count += 1;
                     if attempt_count > 3 {
-                        println!("Exceeded maximum retry attempts for WebDriver connection.");
+                        log::warn!("Exceeded maximum retry attempts for WebDriver connection: {e}");
+                        log::trace!("{:#?}", e);
                         return Err(DriverError::WebDriverConnectionError(e));
                     }
                     sleep(Duration::from_secs(2)).await; // Delay before retrying
                 } else if let DriverError::WebDriverClientError(e) = err {
                     if let fantoccini::error::NewSessionError::SessionNotCreated(e) = &e {
                         if let fantoccini::error::ErrorStatus::SessionNotCreated = e.error {
-                            eprintln!("Please make sure you have the chrome/ium installed: \nError: {e:#?}");
+                            log::error!("Error: Required dependencies are not installed.");
+                            log::error!(
+                                "Please make sure you have the chrome/ium installed: \nError: {e}"
+                            );
+                            log::trace!("{:#?}", e);
+                            log::error!("Exiting kuvpn...");
                             std::process::exit(1);
                         }
                     }
-                    println!(
+                    log::warn!(
                         "WebDriverClientError encountered: {}. Restarting driver...",
                         e
                     );
+                    log::trace!("{:#?}", e);
                     // Drop the current driver to kill the process
                     drop(driver);
                     // Restart driver
                     driver = Driver::start(&mut args.port).await?;
                     attempt_count = 0; // Reset attempt count after restarting
                 } else if let DriverError::ProcessStartError(e) = err {
-                    println!(
+                    log::warn!(
                         "ProcessStartError encountered: {}. Stopping application.",
                         e
                     );
+                    log::trace!("{:#?}", e);
                     return Err(DriverError::ProcessStartError(e)); // Exit on process start error
                 } else if let DriverError::WebDriverStartTimeout = err {
+                    log::trace!("{:#?}", err);
                     return Err(DriverError::WebDriverStartTimeout);
                 }
             }
@@ -120,4 +136,3 @@ pub async fn run_client_with_retries(
 
     Ok(())
 }
-
