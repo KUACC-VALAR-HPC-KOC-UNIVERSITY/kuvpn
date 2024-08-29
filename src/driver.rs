@@ -32,8 +32,8 @@ pub enum DriverError {
 
 impl Driver {
     pub async fn start(port: &mut u16) -> Result<Driver, DriverError> {
-        *port = Driver::find_available_port(*port).await;
-        println!("Using port: {}", *port);
+        Driver::find_available_port(*port).await;
+        log::info!("Using port: {}", *port);
 
         let process = Command::new("chromedriver")
             .arg(format!("--port={}", port))
@@ -56,7 +56,7 @@ impl Driver {
                     break port;
                 }
                 Err(_) => {
-                    println!(
+                    log::info!(
                         "Webdriver port {} is in use, trying next port: {}",
                         port,
                         port.wrapping_add(1)
@@ -76,7 +76,7 @@ impl Driver {
         match timeout(timeout_duration, async {
             loop {
                 if TcpStream::connect(&address).await.is_ok() {
-                    println!("WebDriver is up on port: {}.", port);
+                    log::info!("WebDriver is up on port: {}.", port);
                     return Ok(());
                 }
                 sleep(Duration::from_millis(100)).await;

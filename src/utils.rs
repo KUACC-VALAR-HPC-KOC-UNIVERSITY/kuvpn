@@ -10,11 +10,18 @@ pub async fn get_dsid_cookie(c: &Client) -> Result<Option<String>, DriverError> 
 
 pub async fn skip_host_checker(c: &Client) {
     // Execute gowelcome(); until it fails or runs 2 times correctly
+    log::debug!("Executing gowelcome();...");
     let mut successful_executions = 0;
     while successful_executions < 3 {
         match c.execute("gowelcome();", vec![]).await {
-            Ok(_) => successful_executions += 1,
-            Err(_) => break,
+            Ok(_) => {
+                successful_executions += 1;
+                log::debug!("Successful_execution number: {}...", successful_executions);
+            }
+            Err(_) => {
+                log::debug!("Unsuccessful_execution of gowelcome, skipping...");
+                return;
+            }
         }
     }
 }
@@ -32,14 +39,13 @@ pub fn check_dependencies() -> Result<(), DriverError> {
         .map(|output| output.status.success())
         .unwrap_or(false);
 
-
     if !chromedriver_installed || !openconnect_installed {
-        eprintln!("Error: Required dependencies are not installed.");
+        log::error!("Error: Required dependencies are not installed.");
         if !chromedriver_installed {
-            eprintln!("Please install chromedriver.");
+            log::error!("Please install chromedriver.");
         }
         if !openconnect_installed {
-            eprintln!("Please install openconnect.");
+            log::error!("Please install openconnect.");
         }
         std::process::exit(1);
     }
@@ -52,7 +58,7 @@ pub fn execute_openconnect(cookie_value: String) -> Result<(), DriverError> {
         "sudo openconnect --protocol nc -C 'DSID={}' vpn.ku.edu.tr",
         cookie_value
     );
-    println!("Executing: {}", openconnect_command);
+    log::info!("Executing: {}", openconnect_command);
 
     // Use std::process::Command to execute openconnect
     use std::process::Command as StdCommand;

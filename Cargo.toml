@@ -4,8 +4,12 @@ version = "0.5.1"
 edition = "2021"
 
 [dependencies]
+chrono = "0.4.38"
 clap = { version = "4.5.11", features = ["derive"] }
+colored = "2.1.0"
+env_logger = "0.11.5"
 fantoccini = { version = "0.21.0", default-features = false, features = ["rustls-tls"] }
+log = "0.4.22"
 serde_json = "1.0.127"
 thiserror = "1.0.63"
 tokio = { version = "1.39.2", features = ["tokio-macros", "rt", "macros", "rt-multi-thread", "process"] }
