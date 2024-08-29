@@ -120,13 +120,13 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
 
    If you plan to use the Chrome browser for KUVPN, you will need to install Chromium and its corresponding ChromeDriver:
 
-   ```bash
-   sudo apt-get install chromium-chromedriver
-   ```
-
    As ubuntu insalls snaps for browsers, we must use devmode as to allow for the profile creation. 
    ```bash
    sudo snap install chromium --devmode
+   ```
+
+   ```bash
+   sudo apt-get install chromium-chromedriver
    ```
 
    If you already had it installed please remove it again, install again from the command above:
@@ -134,7 +134,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    sudo snap remove chromium
    ```
 
-3. **Install KUVPN**:
+4. **Install KUVPN**:
 
    With Rust and Cargo installed, you can now install KUVPN directly from the Git repository:
 
@@ -142,7 +142,7 @@ Follow these steps to quickly set up KUVPN on Ubuntu:
    cargo install --git https://github.com/ealtun21/kuvpn
    ```
 
-4. **Run KUVPN**:
+5. **Run KUVPN**:
 
    Once KUVPN is installed, you can run it with the default settings:
 
