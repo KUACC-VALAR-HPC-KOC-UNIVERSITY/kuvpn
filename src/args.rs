@@ -11,4 +11,8 @@ pub struct Args {
     /// Gives the user the dsid without running openconnect
     #[arg(short, long, default_value_t = false)]
     pub dsid: bool,
+
+    /// Delete session information
+    #[arg(short, long, default_value_t = false)]
+    pub clean: bool,
 }

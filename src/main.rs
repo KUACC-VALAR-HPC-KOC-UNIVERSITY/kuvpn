@@ -28,6 +28,28 @@ fn main() {
         return;
     }
 
+    if args.clean {
+        let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
+        let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
+
+        // Check if the directory exists
+        if user_data_dir.exists() {
+            // Remove the directory and its contents
+            match std::fs::remove_dir_all(&user_data_dir) {
+                Ok(_) => {
+                    println!("Session information successfully removed.");
+                }
+                Err(e) => {
+                    eprintln!("Failed to remove session information: {}", e);
+                }
+            }
+        } else {
+            println!("No session information found.");
+        }
+
+        return;
+    }
+
     // Attempt to execute openconnect and handle any errors
     if let Err(e) = execute_openconnect(dsid, args.url) {
         eprintln!("Error executing openconnect: {}", e);
