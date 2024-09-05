@@ -19,9 +19,7 @@ fn main() {
         let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
         let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
 
-        // Check if the directory exists
         if user_data_dir.exists() {
-            // Remove the directory and its contents
             match std::fs::remove_dir_all(&user_data_dir) {
                 Ok(_) => {
                     println!("Session information successfully removed.");
@@ -37,7 +35,17 @@ fn main() {
         return;
     }
 
-    let dsid = match fetch_dsid(&args.url) {
+    // Create the browser
+    let browser = match create_browser() {
+        Ok(browser) => browser,
+        Err(e) => {
+            eprintln!("Failed to create browser: {}", e);
+            return;
+        }
+    };
+
+    // Fetch the DSID using the browser
+    let dsid = match fetch_dsid(&args.url, &browser) {
         Ok(dsid) => dsid,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -50,9 +58,63 @@ fn main() {
         return;
     }
 
-    // Attempt to execute openconnect and handle any errors
+    // drop(browser);
+
     if let Err(e) = execute_openconnect(dsid, args.url) {
         eprintln!("Error executing openconnect: {}", e);
+    }
+}
+
+// New function to create the browser
+fn create_browser() -> Result<Browser, Box<dyn Error>> {
+    let home_dir = env::var("HOME")?;
+    let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn/profile", home_dir));
+
+    if !user_data_dir.exists() {
+        fs::create_dir_all(&user_data_dir)?;
+    }
+
+    let user_agent = OsString::from("--user-agent=Mozilla/5.0");
+    let body = OsString::from("--app=data:text/html,<html><body></body></html>");
+    let window = OsString::from("--new-window");
+
+    let mut options = LaunchOptions::default_builder();
+    let mut launch_options = options
+        .headless(false)
+        .sandbox(false)
+        .args(vec![
+            body.as_os_str(),
+            window.as_os_str(),
+            user_agent.as_os_str(),
+        ])
+        .user_data_dir(Some(user_data_dir));
+
+    if let Ok(executable_path) = default_executable() {
+        launch_options = launch_options.path(Some(executable_path));
+    }
+
+    Ok(Browser::new(launch_options.build()?)?)
+}
+
+fn fetch_dsid(url: &str, browser: &Browser) -> Result<String, Box<dyn Error>> {
+    #[allow(deprecated)]
+    let tab = browser.wait_for_initial_tab()?;
+
+    tab.navigate_to(url)?;
+    tab.wait_until_navigated()?;
+
+    loop {
+        let script =
+            "document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
+        let remote_object = tab.evaluate(script, true)?;
+
+        if let Some(dsid_value) = remote_object.value {
+            if let Some(dsid_string) = dsid_value.as_str() {
+                return Ok(dsid_string.to_string());
+            }
+        }
+
+        thread::sleep(Duration::from_millis(100));
     }
 }
 
@@ -64,72 +126,11 @@ pub fn execute_openconnect(cookie_value: String, url: String) -> Result<(), Box<
 
     println!("Running openconnect with sudo");
 
-    // Use std::process::Command to execute openconnect
     use std::process::Command as StdCommand;
-    // Spawn the openconnect process in the background
     StdCommand::new("sh")
         .arg("-c")
         .arg(&openconnect_command)
         .status()?;
 
     Ok(())
-}
-
-fn fetch_dsid(url: &str) -> Result<String, Box<dyn Error>> {
-    // Define the user data directory within the user's .config directory.
-    let home_dir = env::var("HOME")?;
-    let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
-
-    // Ensure the directory exists
-    if !user_data_dir.exists() {
-        fs::create_dir_all(&user_data_dir)?;
-    }
-
-    let user_agent = OsString::from("--user-agent=Mozilla/5.0");
-    let body = OsString::from("--app=data:text/html,<html><body></body></html>"); // Empty body for --app to work.
-    let window = OsString::from("--new-window");
-
-    let mut options = LaunchOptions::default_builder();
-    let mut launch_options = options
-        .headless(false)
-        .sandbox(false)
-        .args(vec![
-            body.as_os_str(),
-            window.as_os_str(),
-            user_agent.as_os_str(), // used to skip hostchecker
-        ])
-        .user_data_dir(Some(user_data_dir)); // Set the .config/kuvpn directory
-
-    // Check if default_executable exists and set path if found
-    if let Ok(executable_path) = default_executable() {
-        launch_options = launch_options.path(Some(executable_path));
-    }
-
-    // Build the browser
-    let browser = Browser::new(launch_options.build()?)?;
-
-    // Wait for the browser to launch and the tab to load
-    #[allow(deprecated)]
-    let tab = browser.wait_for_initial_tab()?;
-
-    // Navigate to the given URL and wait for the page to load completely
-    tab.navigate_to(url)?;
-    tab.wait_until_navigated()?;
-
-    // Run in a loop to continuously check for the DSID or storage item.
-    loop {
-        // Attempt to get the 'DSID' cookie directly.
-        let script =
-            "document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
-        let remote_object = tab.evaluate(script, true)?;
-
-        if let Some(dsid_value) = remote_object.value {
-            if let Some(dsid_string) = dsid_value.as_str() {
-                return Ok(dsid_string.to_string());
-            }
-        }
-
-        // Sleep for a specified duration before running the script again.
-        thread::sleep(Duration::from_millis(100));
-    }
 }
