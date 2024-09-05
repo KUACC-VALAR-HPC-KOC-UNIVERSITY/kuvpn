@@ -12,10 +12,11 @@ use std::error::Error;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
+use std::process::ExitCode;
 use std::thread;
 use std::time::Duration;
 
-fn main() {
+fn main() -> ExitCode {
     let args = Args::parse();
 
     init_logger(&args.level);
@@ -32,16 +33,29 @@ fn main() {
             match std::fs::remove_dir_all(&user_data_dir) {
                 Ok(_) => {
                     info!("Session information successfully removed.");
+                    return ExitCode::SUCCESS;
                 }
                 Err(e) => {
                     error!("Failed to remove session information: {}", e);
+                    return ExitCode::FAILURE;
                 }
             }
         } else {
             info!("No session information found.");
+            return ExitCode::FAILURE;
         }
+    }
 
-        return;
+    if !args.dsid {
+        let openconnect_installed = std::process::Command::new("which")
+            .arg("openconnect")
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false);
+        if !(openconnect_installed) {
+            log::error!("Please install openconnect.");
+            return ExitCode::FAILURE;
+        }
     }
 
     // Create the browser
@@ -51,7 +65,7 @@ fn main() {
         Ok(browser) => browser,
         Err(e) => {
             error!("Failed to create browser: {}", e);
-            return;
+            return ExitCode::FAILURE;
         }
     };
 
@@ -62,19 +76,21 @@ fn main() {
         Ok(dsid) => dsid,
         Err(e) => {
             error!("Error: {}", e);
-            return;
+            return ExitCode::FAILURE;
         }
     };
 
     if args.dsid {
         info!("DSID retrieved: {}", dsid);
         println!("{dsid}");
-        return;
+        return ExitCode::SUCCESS;
     }
 
     if let Err(e) = execute_openconnect(dsid, args.url) {
         error!("Error executing openconnect: {}", e);
+        return ExitCode::FAILURE;
     }
+    return ExitCode::SUCCESS;
 }
 
 // New function to create the browser
