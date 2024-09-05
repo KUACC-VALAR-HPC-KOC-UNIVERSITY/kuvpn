@@ -5,6 +5,7 @@ use args::Args;
 use clap::Parser;
 use headless_chrome::browser::default_executable;
 use headless_chrome::{Browser, LaunchOptions};
+use log::{error, info};
 use logger::init_logger;
 use std::env;
 use std::error::Error;
@@ -13,7 +14,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-use log::{info, error}; 
 
 fn main() {
     let args = Args::parse();
@@ -34,7 +34,7 @@ fn main() {
                     info!("Session information successfully removed.");
                 }
                 Err(e) => {
-                    error!("Failed to remove session information: {}", e); 
+                    error!("Failed to remove session information: {}", e);
                 }
             }
         } else {
@@ -45,18 +45,18 @@ fn main() {
     }
 
     // Create the browser
-    info!("Creating browser with agent: {}", args.agent); 
+    info!("Creating browser with agent: {}", args.agent);
 
     let browser = match create_browser(&args.agent) {
         Ok(browser) => browser,
         Err(e) => {
-            error!("Failed to create browser: {}", e); 
+            error!("Failed to create browser: {}", e);
             return;
         }
     };
 
     // Fetch the DSID using the browser
-    info!("Fetching DSID from URL: {}", args.url); 
+    info!("Fetching DSID from URL: {}", args.url);
 
     let dsid = match fetch_dsid(&args.url, &browser) {
         Ok(dsid) => dsid,
@@ -84,7 +84,7 @@ fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
 
     if !user_data_dir.exists() {
         fs::create_dir_all(&user_data_dir)?;
-        info!("User data directory created at: {:?}", user_data_dir); 
+        info!("User data directory created at: {:?}", user_data_dir);
     }
 
     let user_agent = OsString::from(format!("--user-agent={agent}"));
@@ -116,7 +116,7 @@ fn fetch_dsid(url: &str, browser: &Browser) -> Result<String, Box<dyn Error>> {
     tab.navigate_to(url)?;
     tab.wait_until_navigated()?;
 
-    info!("Navigating to URL: {}", url); 
+    info!("Navigating to URL: {}", url);
 
     loop {
         let script =
