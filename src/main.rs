@@ -13,57 +13,67 @@ use std::fs;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+use log::{info, error}; 
 
 fn main() {
     let args = Args::parse();
 
     init_logger(&args.level);
 
+    info!("Parsed arguments: {:?}", args);
+
     if args.clean {
         let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
         let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
 
+        info!("Cleaning user data directory: {:?}", user_data_dir);
+
         if user_data_dir.exists() {
             match std::fs::remove_dir_all(&user_data_dir) {
                 Ok(_) => {
-                    println!("Session information successfully removed.");
+                    info!("Session information successfully removed.");
                 }
                 Err(e) => {
-                    eprintln!("Failed to remove session information: {}", e);
+                    error!("Failed to remove session information: {}", e); 
                 }
             }
         } else {
-            println!("No session information found.");
+            info!("No session information found.");
         }
 
         return;
     }
 
     // Create the browser
+    info!("Creating browser with agent: {}", args.agent); 
+
     let browser = match create_browser(&args.agent) {
         Ok(browser) => browser,
         Err(e) => {
-            eprintln!("Failed to create browser: {}", e);
+            error!("Failed to create browser: {}", e); 
             return;
         }
     };
 
     // Fetch the DSID using the browser
+    info!("Fetching DSID from URL: {}", args.url); 
+
     let dsid = match fetch_dsid(&args.url, &browser) {
         Ok(dsid) => dsid,
         Err(e) => {
-            eprintln!("Error: {}", e);
+            error!("Error: {}", e);
             return;
         }
     };
 
     if args.dsid {
+        info!("DSID retrieved: {}", dsid);
         println!("{dsid}");
         return;
     }
 
     if let Err(e) = execute_openconnect(dsid, args.url) {
-        eprintln!("Error executing openconnect: {}", e);
+        error!("Error executing openconnect: {}", e);
     }
 }
 
@@ -74,6 +84,7 @@ fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
 
     if !user_data_dir.exists() {
         fs::create_dir_all(&user_data_dir)?;
+        info!("User data directory created at: {:?}", user_data_dir); 
     }
 
     let user_agent = OsString::from(format!("--user-agent={agent}"));
@@ -105,6 +116,8 @@ fn fetch_dsid(url: &str, browser: &Browser) -> Result<String, Box<dyn Error>> {
     tab.navigate_to(url)?;
     tab.wait_until_navigated()?;
 
+    info!("Navigating to URL: {}", url); 
+
     loop {
         let script =
             "document.cookie.split('; ').find(row => row.startsWith('DSID='))?.split('=')[1];";
@@ -113,6 +126,7 @@ fn fetch_dsid(url: &str, browser: &Browser) -> Result<String, Box<dyn Error>> {
         if let Some(dsid_value) = remote_object.value {
             if let Some(dsid_string) = dsid_value.as_str() {
                 tab.close_with_unload().expect("failed to close");
+                info!("DSID value found: {}", dsid_string);
                 return Ok(dsid_string.to_string());
             }
         }
