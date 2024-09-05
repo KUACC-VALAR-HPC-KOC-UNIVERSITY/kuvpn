@@ -18,7 +18,7 @@
         # Define the default package
         packages.default = rustPlatform.buildRustPackage rec {
           pname = "kuvpn";
-          version = "0.5.3";
+          version = "0.6.0";
 
           src = ./.;
 
@@ -36,10 +36,6 @@
           # Explicitly set environment variables for pkg-config
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
 
-          postPatch = ''
-            substituteInPlace src/driver.rs --replace "chromedriver" "${pkgs.chromedriver}/bin/chromedriver"
-          '';
-
           meta = with lib; {
             description = "KUVPN - A Rust-based VPN application";
             license = licenses.mit;
@@ -54,7 +50,6 @@
             pkgs.rustc
             pkgs.rustfmt
             pkgs.cargo
-            pkgs.chromedriver
             pkgs.openconnect
             pkgs.chromium 
           ];
@@ -76,10 +71,6 @@
           program = "${pkgs.chromium}/bin/chromium";
         };
 
-        apps.chromedriver = {
-          type = "app";
-          program = "${pkgs.chromedriver}/bin/chromedriver";
-        };
       }
     );
 }
