@@ -15,19 +15,6 @@ use std::time::Duration;
 fn main() {
     let args = Args::parse();
 
-    let dsid = match fetch_dsid(&args.url) {
-        Ok(dsid) => dsid,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            return;
-        }
-    };
-
-    if args.dsid {
-        println!("{dsid}");
-        return;
-    }
-
     if args.clean {
         let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
         let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
@@ -47,6 +34,19 @@ fn main() {
             println!("No session information found.");
         }
 
+        return;
+    }
+
+    let dsid = match fetch_dsid(&args.url) {
+        Ok(dsid) => dsid,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            return;
+        }
+    };
+
+    if args.dsid {
+        println!("{dsid}");
         return;
     }
 
@@ -85,7 +85,7 @@ fn fetch_dsid(url: &str) -> Result<String, Box<dyn Error>> {
         fs::create_dir_all(&user_data_dir)?;
     }
 
-    let user_agent = OsString::from("--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1");
+    let user_agent = OsString::from("--user-agent=Mozilla/5.0");
     let body = OsString::from("--app=data:text/html,<html><body></body></html>"); // Empty body for --app to work.
     let window = OsString::from("--new-window");
 
