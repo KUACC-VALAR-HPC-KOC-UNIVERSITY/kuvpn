@@ -21,7 +21,7 @@ KUVPN is a simple Rust program to retrieve the DSID cookie and execute the OpenC
 
 This command will download kuvpn, and install it to your `/usr/bin/`
 ```
-curl --proto '=https' --tlsv1.2 -sSfL https://github.com/ealtun21/kuvpn/releases/download/v0.6.0/kuvpn-x86_64-unknown-linux-musl -o /usr/bin/kuvpn && chmod +x /usr/bin/kuvpn
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/ealtun21/kuvpn/releases/download/v0.6.0/kuvpn-x86_64-unknown-linux-musl -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/bin/kuvpn && sudo chmod +x /usr/bin/kuvpn
 ```
 
 # Option 2: Build & Install (Source Code)
