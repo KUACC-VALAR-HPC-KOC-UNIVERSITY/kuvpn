@@ -8,7 +8,7 @@ pub fn init_logger(mode: &LogLevel) {
     let level = match mode {
         LogLevel::Info => LevelFilter::Info,
         LogLevel::Off => LevelFilter::Off,
-        LogLevel::Error => LevelFilter::Off,
+        LogLevel::Error => LevelFilter::Erorr,
         LogLevel::Debug => LevelFilter::Debug,
         LogLevel::Warn => LevelFilter::Warn,
         LogLevel::Trace => LevelFilter::Trace,
