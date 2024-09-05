@@ -3,6 +3,7 @@ mod logger;
 
 use args::Args;
 use clap::Parser;
+use headless_chrome::browser::default_executable;
 use headless_chrome::{Browser, LaunchOptions};
 use logger::init_logger;
 use std::env;
@@ -34,18 +35,25 @@ fn browser_website(url: &str) -> Result<String, Box<dyn Error>> {
         fs::create_dir_all(&user_data_dir)?;
     }
 
-    // Launch the browser with the specified user data directory.
+    let body = OsString::from("--app=data:text/html,<html><body></body></html>");
+    let window = OsString::from("--new-window");
+    let mut options = LaunchOptions::default_builder();
+    let mut launch_options = options
+        .headless(false)
+        .sandbox(false)
+        .args(vec![body.as_os_str(), window.as_os_str()]) // Converts &str to OsStr
+        .user_data_dir(Some(user_data_dir)); // Set the .config/kuvpn directory
+
+    // Check if default_executable exists and set path if found
+    if let Ok(executable_path) = default_executable() {
+        launch_options = launch_options.path(Some(executable_path));
+    }
+
+    // Build the browser
     let browser = Browser::new(
-        LaunchOptions::default_builder()
-            .headless(false)
-            .sandbox(false)
-            .args(vec![
-                OsString::from("--app=data:text/html,<html><body></body></html>").as_os_str(),
-                OsString::from("----new-window").as_os_str(),
-            ]) // Converts &str to OsStr
-            .user_data_dir(Some(user_data_dir)) // Set the .config/kuvpn directory
+        launch_options
             .build()
-            .expect("Could not find chrome-executable"),
+            .expect("Could not find chrome-executable"), // Should be able to install chrome
     )?;
 
     // Wait for the browser to launch and the tab to load
