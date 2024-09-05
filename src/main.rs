@@ -1,9 +1,11 @@
 mod args;
+mod logger;
 
 use args::Args;
 use clap::Parser;
 use headless_chrome::browser::default_executable;
 use headless_chrome::{Browser, LaunchOptions};
+use logger::init_logger;
 use std::env;
 use std::error::Error;
 use std::ffi::OsString;
@@ -14,6 +16,8 @@ use std::time::Duration;
 
 fn main() {
     let args = Args::parse();
+
+    init_logger(&args.level);
 
     if args.clean {
         let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
@@ -36,7 +40,7 @@ fn main() {
     }
 
     // Create the browser
-    let browser = match create_browser() {
+    let browser = match create_browser(&args.agent) {
         Ok(browser) => browser,
         Err(e) => {
             eprintln!("Failed to create browser: {}", e);
@@ -64,7 +68,7 @@ fn main() {
 }
 
 // New function to create the browser
-fn create_browser() -> Result<Browser, Box<dyn Error>> {
+fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
     let home_dir = env::var("HOME")?;
     let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn/profile", home_dir));
 
@@ -72,7 +76,7 @@ fn create_browser() -> Result<Browser, Box<dyn Error>> {
         fs::create_dir_all(&user_data_dir)?;
     }
 
-    let user_agent = OsString::from("--user-agent=Mozilla/5.0");
+    let user_agent = OsString::from(format!("--user-agent={agent}"));
     let body = OsString::from("--app=data:text/html,<html><body></body></html>");
     let window = OsString::from("--new-window");
 

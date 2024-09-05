@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.11", features = ["derive"] }
+colored = "2.1.0"
 env_logger = "0.11.5"
 headless_chrome = { version = "1.0.14", features = ["fetch", "rustls"] }
 log = "0.4.22"
