@@ -1,11 +1,9 @@
 mod args;
-mod logger;
 
 use args::Args;
 use clap::Parser;
 use headless_chrome::browser::default_executable;
 use headless_chrome::{Browser, LaunchOptions};
-use logger::init_logger;
 use std::env;
 use std::error::Error;
 use std::ffi::OsString;
@@ -16,8 +14,6 @@ use std::time::Duration;
 
 fn main() {
     let args = Args::parse();
-
-    init_logger(&args.level);
 
     match browser_website(&args.url) {
         Ok(dsid) => println!("{dsid}"),

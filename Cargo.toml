@@ -1,14 +1,13 @@
 [package]
 name = "kuvpn"
-version = "0.5.3"
+version = "0.6.0"
 edition = "2021"
 
 [dependencies]
-chrono = "0.4.38"
 clap = { version = "4.5.11", features = ["derive"] }
-colored = "2.1.0"
-env_logger = "0.11.5"
-log = "0.4.22"
-serde_json = "1.0.127"
-thiserror = "1.0.63"
 headless_chrome = { version = "1.0.14", features = ["fetch", "rustls"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
