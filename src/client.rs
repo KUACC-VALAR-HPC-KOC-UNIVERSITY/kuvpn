@@ -5,7 +5,7 @@ use fantoccini::ClientBuilder;
 use serde_json;
 use tokio::time::{sleep, Duration};
 
-pub async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
+pub async fn run_client(url: String, port: u16, dsid_mode: bool) -> Result<(), DriverError> {
     let client = setup_client(port).await?;
     client.goto(&url).await?;
 
@@ -15,7 +15,11 @@ pub async fn run_client(url: String, port: u16) -> Result<(), DriverError> {
     if let Some(cookie_value) = get_dsid_cookie_with_retries(&client).await? {
         client.close().await?;
         log::info!("DSID cookie found: {}", cookie_value);
-        execute_openconnect(cookie_value)?;
+        if dsid_mode {
+            println!("{}", cookie_value);
+        } else {
+            execute_openconnect(cookie_value)?;
+        }
         return Ok(());
     }
 
@@ -81,10 +85,11 @@ async fn get_dsid_cookie_with_retries(
 pub async fn run_client_with_retries(
     mut driver: Driver,
     args: &mut Args,
+    dsid_mode: bool,
 ) -> Result<(), DriverError> {
     let mut attempt_count = 0;
     loop {
-        match run_client(args.url.clone(), args.port).await {
+        match run_client(args.url.clone(), args.port, dsid_mode).await {
             Ok(_) => break,
             Err(err) => {
                 if let DriverError::WebDriverConnectionError(e) = err {

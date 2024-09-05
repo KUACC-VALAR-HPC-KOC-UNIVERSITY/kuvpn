@@ -17,7 +17,7 @@ async fn main() -> Result<(), DriverError> {
     let mut args = Args::parse();
     init_logger(&args.level);
 
-    check_dependencies()?;
+    check_dependencies(args.dsid)?;
     log::debug!("Dependencies checked successfully.");
 
     let driver = Driver::start(&mut args.port).await?;
@@ -29,7 +29,8 @@ async fn main() -> Result<(), DriverError> {
         .await?;
     log::debug!("WebDriver is reachable.");
 
-    run_client_with_retries(driver, &mut args).await?;
+    let args = &mut args;
+    run_client_with_retries(driver, args, args.dsid).await?;
 
     log::debug!("Reached end of main.");
     Ok(())

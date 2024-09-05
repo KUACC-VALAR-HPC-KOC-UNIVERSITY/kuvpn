@@ -18,7 +18,7 @@
         # Define the default package
         packages.default = rustPlatform.buildRustPackage rec {
           pname = "kuvpn";
-          version = "0.5.2";
+          version = "0.5.3";
 
           src = ./.;
 

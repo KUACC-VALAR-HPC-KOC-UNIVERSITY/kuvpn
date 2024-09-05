@@ -25,4 +25,8 @@ pub struct Args {
     /// The level of logging
     #[arg(short, long, value_enum, default_value_t = LogLevel::Info)]
     pub level: LogLevel,
+
+    /// Gives the user the dsid without running openconnect
+    #[arg(short, long, default_value_t = false)]
+    pub dsid: bool,
 }

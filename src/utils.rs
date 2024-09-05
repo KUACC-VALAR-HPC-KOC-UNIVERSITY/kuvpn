@@ -26,7 +26,7 @@ pub async fn skip_host_checker(c: &Client) {
     }
 }
 
-pub fn check_dependencies() -> Result<(), DriverError> {
+pub fn check_dependencies(dsid: bool) -> Result<(), DriverError> {
     let chromedriver_installed = std::process::Command::new("which")
         .arg("chromedriver")
         .output()
@@ -39,12 +39,12 @@ pub fn check_dependencies() -> Result<(), DriverError> {
         .map(|output| output.status.success())
         .unwrap_or(false);
 
-    if !chromedriver_installed || !openconnect_installed {
+    if !chromedriver_installed || !(openconnect_installed || dsid) {
         log::error!("Error: Required dependencies are not installed.");
         if !chromedriver_installed {
             log::error!("Please install chromedriver.");
         }
-        if !openconnect_installed {
+        if !(openconnect_installed || dsid) {
             log::error!("Please install openconnect.");
         }
         std::process::exit(1);
