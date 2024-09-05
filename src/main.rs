@@ -15,13 +15,45 @@ use std::time::Duration;
 fn main() {
     let args = Args::parse();
 
-    match browser_website(&args.url) {
-        Ok(dsid) => println!("{dsid}"),
-        Err(_) => todo!(),
+    let dsid = match fetch_dsid(&args.url) {
+        Ok(dsid) => dsid,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            return;
+        }
+    };
+
+    if args.dsid {
+        println!("{dsid}");
+        return;
+    }
+
+    // Attempt to execute openconnect and handle any errors
+    if let Err(e) = execute_openconnect(dsid, args.url) {
+        eprintln!("Error executing openconnect: {}", e);
     }
 }
 
-fn browser_website(url: &str) -> Result<String, Box<dyn Error>> {
+pub fn execute_openconnect(cookie_value: String, url: String) -> Result<(), Box<dyn Error>> {
+    let openconnect_command = format!(
+        "sudo openconnect --protocol nc -C 'DSID={}' {}",
+        cookie_value, url
+    );
+
+    println!("Running openconnect with sudo");
+
+    // Use std::process::Command to execute openconnect
+    use std::process::Command as StdCommand;
+    // Spawn the openconnect process in the background
+    StdCommand::new("sh")
+        .arg("-c")
+        .arg(&openconnect_command)
+        .status()?;
+
+    Ok(())
+}
+
+fn fetch_dsid(url: &str) -> Result<String, Box<dyn Error>> {
     // Define the user data directory within the user's .config directory.
     let home_dir = env::var("HOME")?;
     let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
@@ -31,13 +63,19 @@ fn browser_website(url: &str) -> Result<String, Box<dyn Error>> {
         fs::create_dir_all(&user_data_dir)?;
     }
 
-    let body = OsString::from("--app=data:text/html,<html><body></body></html>");
+    let user_agent = OsString::from("--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1");
+    let body = OsString::from("--app=data:text/html,<html><body></body></html>"); // Empty body for --app to work.
     let window = OsString::from("--new-window");
+
     let mut options = LaunchOptions::default_builder();
     let mut launch_options = options
         .headless(false)
         .sandbox(false)
-        .args(vec![body.as_os_str(), window.as_os_str()]) // Converts &str to OsStr
+        .args(vec![
+            body.as_os_str(),
+            window.as_os_str(),
+            user_agent.as_os_str(), // used to skip hostchecker
+        ])
         .user_data_dir(Some(user_data_dir)); // Set the .config/kuvpn directory
 
     // Check if default_executable exists and set path if found
@@ -46,11 +84,7 @@ fn browser_website(url: &str) -> Result<String, Box<dyn Error>> {
     }
 
     // Build the browser
-    let browser = Browser::new(
-        launch_options
-            .build()
-            .expect("Could not find chrome-executable"), // Should be able to install chrome
-    )?;
+    let browser = Browser::new(launch_options.build()?)?;
 
     // Wait for the browser to launch and the tab to load
     #[allow(deprecated)]
