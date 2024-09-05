@@ -58,8 +58,6 @@ fn main() {
         return;
     }
 
-    // drop(browser);
-
     if let Err(e) = execute_openconnect(dsid, args.url) {
         eprintln!("Error executing openconnect: {}", e);
     }
@@ -110,6 +108,7 @@ fn fetch_dsid(url: &str, browser: &Browser) -> Result<String, Box<dyn Error>> {
 
         if let Some(dsid_value) = remote_object.value {
             if let Some(dsid_string) = dsid_value.as_str() {
+                tab.close_with_unload().expect("failed to close");
                 return Ok(dsid_string.to_string());
             }
         }
