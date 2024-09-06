@@ -9,7 +9,7 @@ KUVPN is a simple Rust program to retrieve the DSID cookie and execute the OpenC
 - [x] Execute OpenConnect command
 - [x] Customizable URL
 - [x] Remembers your login session safely
-- [x] Nix build for reliable building
+- [ ] Nix build for reliable building
 - [x] Logging for debugging tool
 
 # Prerequisites
