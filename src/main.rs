@@ -16,6 +16,29 @@ use std::process::ExitCode;
 use std::thread;
 use std::time::Duration;
 
+// Function to get the user data directory based on the operating system
+fn get_user_data_dir() -> Result<PathBuf, Box<dyn Error>> {
+    let home_dir = env::var("HOME").or_else(|_| env::var("USERPROFILE"))?;
+    
+    #[cfg(target_os = "linux")]
+    let base_path = ".local/share/kuvpn/profile";
+    
+    #[cfg(target_os = "macos")]
+    let base_path = "Library/Application Support/kuvpn/profile";
+    
+    #[cfg(target_os = "windows")]
+    let base_path = "AppData/Roaming/kuvpn/profile";
+
+    let user_data_dir = PathBuf::from(format!("{}/{}", home_dir, base_path));
+
+    if !user_data_dir.exists() {
+        fs::create_dir_all(&user_data_dir)?;
+        info!("User data directory created at: {:?}", user_data_dir);
+    }
+
+    Ok(user_data_dir)
+}
+
 fn main() -> ExitCode {
     let args = Args::parse();
 
@@ -24,8 +47,8 @@ fn main() -> ExitCode {
     info!("Parsed arguments: {:?}", args);
 
     if args.clean {
-        let home_dir = env::var("HOME").expect("Unable to obtain home-folder");
-        let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn", home_dir));
+        // Use the get_user_data_dir function to obtain the correct path
+        let user_data_dir = get_user_data_dir().expect("Unable to obtain user data directory");
 
         info!("Cleaning user data directory: {:?}", user_data_dir);
 
@@ -95,13 +118,8 @@ fn main() -> ExitCode {
 
 // New function to create the browser
 fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
-    let home_dir = env::var("HOME")?;
-    let user_data_dir = PathBuf::from(format!("{}/.config/kuvpn/profile", home_dir));
-
-    if !user_data_dir.exists() {
-        fs::create_dir_all(&user_data_dir)?;
-        info!("User data directory created at: {:?}", user_data_dir);
-    }
+    // Use the get_user_data_dir function to obtain the correct path
+    let user_data_dir = get_user_data_dir()?;
 
     let user_agent = OsString::from(format!("--user-agent={agent}"));
     let body = OsString::from("--app=data:text/html,<html><body></body></html>");
