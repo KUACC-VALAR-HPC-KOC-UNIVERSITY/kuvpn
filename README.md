@@ -16,7 +16,7 @@ KUVPN is a simple Rust program to retrieve the DSID cookie and execute the OpenC
 - Mandatory: OpenConnect
    - On ubuntu: `sudo apt install openconnect`
    - Optional: when used with `--dsid` / `-d` flag. 
-- Optional (AutoInstall: when not Found): Chromium/Chrome
+- Optional (AutoInstall: when not found): Chromium/Chrome
 
 # Option 1: Install (Binary) (Recommended) (64bit Linux)
 
