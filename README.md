@@ -18,7 +18,9 @@ KUVPN is a simple Rust program to retrieve the DSID cookie and execute the OpenC
    - Optional: when used with `--dsid` / `-d` flag. 
 - Optional (AutoInstall: when not found): Chromium/Chrome
 
-# Option 1: Install (Binary) (Recommended) (64bit Linux)
+# Binary Install (Recommended)
+
+## 64bit Linux
 
 This command will download **KUVPN** and install it to your `/usr/bin/`:
 
@@ -34,7 +36,19 @@ sudo mv /tmp/kuvpn /usr/bin/kuvpn
 sudo chmod +x /usr/bin/kuvpn
 ```
 
-# Option 2: Build & Install (Source Code) (All Platforms)
+## MacOS Arm64 (M*)
+```
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/local/bin/kuvpn && sudo chmod +x /usr/local/bin/kuvpn
+```
+
+Alternatively, if you prefer to execute the steps one by one:
+```
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn 
+sudo mv /tmp/kuvpn /usr/local/bin/kuvpn 
+sudo chmod +x /usr/local/bin/kuvpn
+```
+
+# Alternatively, Build & Install (Source Code) (All Platforms)
 
 First, install Rustup using this command or your package manager. While you can use Cargo from a package manager, it is not recommended:
 ```
