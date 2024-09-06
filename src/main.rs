@@ -19,13 +19,13 @@ use std::time::Duration;
 // Function to get the user data directory based on the operating system
 fn get_user_data_dir() -> Result<PathBuf, Box<dyn Error>> {
     let home_dir = env::var("HOME").or_else(|_| env::var("USERPROFILE"))?;
-    
+
     #[cfg(target_os = "linux")]
     let base_path = ".local/share/kuvpn/profile";
-    
+
     #[cfg(target_os = "macos")]
     let base_path = "Library/Application Support/kuvpn/profile";
-    
+
     #[cfg(target_os = "windows")]
     let base_path = "AppData/Roaming/kuvpn/profile";
 
@@ -129,6 +129,7 @@ fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
     let mut launch_options = options
         .headless(false)
         .sandbox(false)
+        .idle_browser_timeout(Duration::MAX)
         .args(vec![
             body.as_os_str(),
             window.as_os_str(),
