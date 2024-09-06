@@ -43,7 +43,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 Afterward, you can install KUVPN from source using this command:
 ```
-cargo install --git https://github.com/ealtun21/kuvpn
+cargo install --git https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn
 ```
 
 # Usage
