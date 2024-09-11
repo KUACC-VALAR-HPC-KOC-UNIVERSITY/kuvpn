@@ -701,13 +701,14 @@ dependencies = [
 
 [[package]]
 name = "kuvpn"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "clap",
  "colored",
  "env_logger",
  "headless_chrome",
  "log",
+ "which",
 ]
 
 [[package]]

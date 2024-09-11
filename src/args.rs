@@ -39,4 +39,8 @@ pub struct Args {
     /// User agent for browser
     #[arg(short, long, default_value = "Mozilla/5.0")]
     pub agent: String,
+
+    /// Command to run openconnect with (e.g., doas, sudo, pkexec, or a custom script)
+    #[arg(short, long)]
+    pub run_command: Option<String>,
 }

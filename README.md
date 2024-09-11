@@ -1,4 +1,4 @@
-# KUVPN v0.6.2
+# KUVPN v0.6.3
 
 KUVPN is a simple Rust cli to retrieve the DSID cookie and execute the OpenConnect command to connect to the VPN for Koç University.
 
@@ -25,25 +25,25 @@ KUVPN is a simple Rust cli to retrieve the DSID cookie and execute the OpenConne
 This command will download **KUVPN** and install it to your `/usr/bin/`:
 
 ```
-curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-x86_64-unknown-linux-musl -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/bin/kuvpn && sudo chmod +x /usr/bin/kuvpn
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.3/kuvpn-x86_64-unknown-linux-musl -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/bin/kuvpn && sudo chmod +x /usr/bin/kuvpn
 ```
 
 Alternatively, if you prefer to execute the steps one by one:
 
 ```
-curl --proto '=https' --tlsv1.2 -sSfL -o /tmp/kuvpn https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-x86_64-unknown-linux-musl
+curl --proto '=https' --tlsv1.2 -sSfL -o /tmp/kuvpn https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.3/kuvpn-x86_64-unknown-linux-musl
 sudo mv /tmp/kuvpn /usr/bin/kuvpn
 sudo chmod +x /usr/bin/kuvpn
 ```
 
 ## MacOS Arm64 (M*)
 ```
-curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/local/bin/kuvpn && sudo chmod +x /usr/local/bin/kuvpn
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.3/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn && sudo mv /tmp/kuvpn /usr/local/bin/kuvpn && sudo chmod +x /usr/local/bin/kuvpn
 ```
 
 Alternatively, if you prefer to execute the steps one by one:
 ```
-curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.2/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn 
+curl --proto '=https' --tlsv1.2 -sSfL https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/v0.6.3/kuvpn-aarch64-apple-darwin -o /tmp/kuvpn 
 sudo mv /tmp/kuvpn /usr/local/bin/kuvpn 
 sudo chmod +x /usr/local/bin/kuvpn
 ```
@@ -112,6 +112,9 @@ Options:
           User agent for browser
           
           [default: Mozilla/5.0]
+
+  -r, --run-command <RUN_COMMAND>
+          Command to run openconnect with (e.g., doas, sudo, pkexec, or a custom script)
 
   -h, --help
           Print help (see a summary with '-h')
