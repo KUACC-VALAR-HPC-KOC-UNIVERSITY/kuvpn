@@ -9,7 +9,7 @@ KUVPN is a simple Rust cli to retrieve the DSID cookie and execute the OpenConne
 - [x] Execute OpenConnect command
 - [x] Customizable URL
 - [x] Remembers your login session safely
-- [ ] Nix build for reliable building
+- [x] Nix build for reliable building
 - [x] Logging for debugging tool
 
 # Prerequisites
