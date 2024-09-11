@@ -2,62 +2,50 @@
   description = "KUVPN";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url      = "github:NixOS/nixpkgs/nixos-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
+    flake-utils.url  = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs = { self, nixpkgs, rust-overlay, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
-        lib = pkgs.lib;
-        rustPlatform = pkgs.rustPlatform;
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
       in
       {
-        # Define the default package
-        packages.default = rustPlatform.buildRustPackage rec {
+        devShells.default = with pkgs; mkShell {
+          buildInputs = [
+            pkg-config
+            rust-bin.beta.latest.default
+          ];
+        };
+
+        # Define the default package (to fix nix run)
+        packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "kuvpn";
           version = "0.6.2";
 
           src = ./.;
-
-          name = "${pname}-${version}";
-
+          
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
 
-          cargoHash = "sha256-yejviZYX11G/KtfJFFQv6bGq0jD+04Rz3/6Wf2lL8zs=";
+          cargoBuildFlags = [
+            "--release"
+          ];
 
-          # No need for buildInputs for runtime dependencies
-          buildInputs = [ ];
+          nativeBuildInputs = [ pkgs.pkg-config pkgs.rustfmt ];
 
-          # Explicitly set environment variables for pkg-config
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-
-          meta = with lib; {
+          meta = with pkgs.lib; {
             description = "KUVPN - A Rust-based VPN application";
             license = licenses.mit;
-            maintainers = with lib.maintainers; [ "ealtun21" ];
+            maintainers = [ maintainers.ealtun21 ];
             platforms = platforms.linux;
           };
-        };
-
-        # Define the devShell
-        devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.rustc
-            pkgs.rustfmt
-            pkgs.cargo
-            pkgs.openconnect
-            pkgs.chromium 
-          ];
-
-          nativeBuildInputs = [
-            pkgs.rust-analyzer
-            pkgs.lldb_18
-          ];
         };
 
         # To run your package using `nix run`
@@ -65,12 +53,6 @@
           type = "app";
           program = "${self.packages.${system}.default}/bin/kuvpn";
         };
-
-        apps.chromium = {
-          type = "app";
-          program = "${pkgs.chromium}/bin/chromium";
-        };
-
       }
     );
 }
