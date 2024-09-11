@@ -20,6 +20,9 @@
           buildInputs = [
             pkg-config
             rust-bin.beta.latest.default
+            pkgs.openssl
+            pkgs.libclang
+            pkgs.libiconv
           ];
         };
 
@@ -37,8 +40,11 @@
           cargoBuildFlags = [
             "--release"
           ];
-
+          
           nativeBuildInputs = [ pkgs.pkg-config pkgs.rustfmt ];
+
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.libclang.dev}/lib/pkgconfig";
+          LIBCLANG_PATH = "${pkgs.libclang}/lib";
 
           meta = with pkgs.lib; {
             description = "KUVPN - A Rust-based VPN application";
