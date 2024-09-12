@@ -18,7 +18,7 @@ jobs:
     - name: Build-musl
       uses: gmiam/rust-musl-action@master
       with:
-        args: cargo build --target $BUILD_TARGET --release
+        args: cargo build --target $BUILD_TARGET --release -p kuvpn
     - name: Upload
       uses: actions/upload-artifact@v4.3.1
       with:
