@@ -12,10 +12,7 @@ jobs:
   build:
     runs-on: macos-13
     steps:
-      - name: Install Package
-        uses: ConorMacBride/install-package@v1.1.0
-        with:
-          brew: openssl pkg-config
+      - uses: actions/checkout@v4
           
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
