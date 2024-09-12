@@ -26,6 +26,29 @@ curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/KUACC-VA
 
 __Note: Always inspect scripts before running commands from the internet!__
 
+# Binary Install (Manual)
+
+1. Download the latest binary from the [GitHub releases page](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases).
+   
+
+2. Move the binary to a directory in your `$PATH`, for example:
+
+   ```bash
+   sudo mv kuvpn /usr/local/bin/
+   ```
+
+3. Make the binary executable:
+
+   ```bash
+   sudo chmod +x /usr/local/bin/kuvpn
+   ```
+
+4. Verify the installation by running:
+
+   ```bash
+   kuvpn --version
+   ```
+
 # Alternatively, Build & Install (Source Code)
 
 First, install Rustup using this command or your package manager. While you can use Cargo from a package manager, it is not recommended:

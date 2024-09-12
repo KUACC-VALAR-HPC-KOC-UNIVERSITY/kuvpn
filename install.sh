@@ -1,6 +1,6 @@
 #!/bin/sh
 # Installation script for KUVPN
-# This script will download the KUVPN and install them in $HOME/.kuvpn/bin
+# This script will download KUVPN and install it in $HOME/.kuvpn/bin
 # It will also add $HOME/.kuvpn/bin to PATH
 # Usage:
 # curl --proto '=https' --tlsv1.2 -sSfL URL_TO_SCRIPT_HERE | sh
@@ -14,32 +14,23 @@ COLOR_RESET="\033[0m"
 TAG="v0.6.3"
 
 echo ""
-echo "=================================="
-echo ""
-printf "${COLOR_PRIMARY}Installing KUVPN${COLOR_RESET}\n"
-echo ""
-echo ""
-printf "This script will download KUVPN and install it in \$HOME/.kuvpn/bin\n"
-echo ""
-echo "=================================="
-echo ""
-
+printf "${COLOR_PRIMARY}Installing KUVPN${COLOR_RESET}\n\n"
+printf "This script will download KUVPN and install it in \$HOME/.kuvpn/bin\n\n"
 
 CLI_DOWNLOAD_URL=""
 
-# detect OS using uname
+# Detect OS and architecture
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
 case "$OS" in
     Darwin)
-        # detect architecture
         if [ "$ARCH" = "x86_64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-x86_64-apple-darwin"
         elif [ "$ARCH" = "arm64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-aarch64-apple-darwin"
         else
-            printf "${COLOR_FAILURE}unsupported architecture${COLOR_RESET}\n"
+            printf "${COLOR_FAILURE}Unsupported architecture${COLOR_RESET}\n"
             exit 1
         fi
         ;;
@@ -47,17 +38,17 @@ case "$OS" in
         if [ "$ARCH" = "x86_64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-x86_64-unknown-linux-musl"
         else
-            printf "${COLOR_FAILURE}unsupported architecture${COLOR_RESET}\n"
+            printf "${COLOR_FAILURE}Unsupported architecture${COLOR_RESET}\n"
             exit 1
         fi
         ;;
     *)
-        printf "${COLOR_FAILURE}unsupported OS${COLOR_RESET}\n"
+        printf "${COLOR_FAILURE}Unsupported OS${COLOR_RESET}\n"
         exit 1
         ;;
 esac
 
-# check if .kuvpn/bin folder exists under home directory
+# Create the directory if it doesn't exist
 if [ ! -d "$HOME/.kuvpn/bin" ]; then
     mkdir -p "$HOME/.kuvpn/bin" || {
         printf "${COLOR_FAILURE}Failed to create directory!${COLOR_RESET}\n"
@@ -65,52 +56,35 @@ if [ ! -d "$HOME/.kuvpn/bin" ]; then
     }
 fi
 
-# download cli
-printf "${COLOR_PRIMARY}Downloading CLI${COLOR_RESET}\n"
-echo ""
+# Download the CLI
+printf "${COLOR_PRIMARY}Downloading KUVPN...${COLOR_RESET}\n\n"
 curl --proto '=https' --tlsv1.2 -sSfL "$CLI_DOWNLOAD_URL" -o "$HOME/.kuvpn/bin/kuvpn" || {
-    printf "${COLOR_FAILURE}Download failed!${COLOR_RESET}\n"
+    printf "${COLOR_FAILURE}Download failed!${COLOR_RESET}\n\n"
     exit 1
 }
 chmod +x "$HOME/.kuvpn/bin/kuvpn"
-echo ""
-echo "=================================="
-echo ""
 
-# add .kuvpn/bin to PATH
-printf "${COLOR_PRIMARY}Adding .kuvpn/bin to PATH${COLOR_RESET}\n"
-echo ""
+# Add to PATH
+printf "${COLOR_PRIMARY}Adding KUVPN to PATH...${COLOR_RESET}\n\n"
 if echo "$PATH" | grep -qv "$HOME/.kuvpn/bin"; then
-
-    echo "Adding .kuvpn/bin to PATH"
-
-    # check if .bashrc or .bash_profile exists
-    if [ -f "$HOME/.bashrc" ]; then
-        if ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
-            echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bashrc"
-            echo "Run source $HOME/.bashrc to apply changes"
-        fi
-    elif [ -f "$HOME/.bash_profile" ]; then
-        if ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
-            echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bash_profile"
-            echo "Run source $HOME/.bash_profile to apply changes"
-        fi
+    if [ -f "$HOME/.bashrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
+        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bashrc"
+        echo "Run 'source $HOME/.bashrc' or restart your terminal to apply the changes."
+    elif [ -f "$HOME/.bash_profile" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
+        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bash_profile"
+        echo "Run 'source $HOME/.bash_profile' or restart your terminal to apply the changes."
+    elif [ -f "$HOME/.zshrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
+        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.zshrc"
+        echo "Run 'source $HOME/.zshrc' or restart your terminal to apply the changes."
+    else
+        printf "${COLOR_WARN}Shell profile not detected. You may need to manually add KUVPN to your shell profile.${COLOR_RESET}\n"
     fi
-
-    # check if .zshrc exists
-    if [ -f "$HOME/.zshrc" ]; then
-        if ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
-            echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.zshrc"
-            echo "Run source $HOME/.zshrc to apply changes"
-        fi
-    fi
-
 fi
-echo "If you are using a shell other than bash or zsh, please add the following line to your shell profile:"
+
+# Notify for non-bash or zsh shells
+echo ""
+printf "${COLOR_WARN}If you are using a shell other than bash or zsh, please add the following line to your shell profile manually:${COLOR_RESET}\n"
 echo 'export PATH=$PATH:$HOME/.kuvpn/bin'
 
 echo ""
-echo "=================================="
-echo ""
-
 printf "${COLOR_SUCCESS}Installation complete!${COLOR_RESET}\n"
