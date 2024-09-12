@@ -27,23 +27,24 @@ echo ""
 
 CLI_DOWNLOAD_URL=""
 
-# detect os
-case "$OSTYPE" in
-    darwin*)
-        # detect arch
-        if [ "$(uname -m)" = "x86_64" ]; then
-            # install macos cli
+# detect OS using uname
+OS="$(uname -s)"
+ARCH="$(uname -m)"
+
+case "$OS" in
+    Darwin)
+        # detect architecture
+        if [ "$ARCH" = "x86_64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-x86_64-apple-darwin"
-        elif [ "$(uname -m)" = "arm64" ]; then
-            # install macos cli
+        elif [ "$ARCH" = "arm64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-aarch64-apple-darwin"
         else
             printf "${COLOR_FAILURE}unsupported architecture${COLOR_RESET}\n"
             exit 1
         fi
         ;;
-    linux*)
-        if [ "$(uname -m)" = "x86_64" ]; then
+    Linux)
+        if [ "$ARCH" = "x86_64" ]; then
             CLI_DOWNLOAD_URL="https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/download/${TAG}/kuvpn-x86_64-unknown-linux-musl"
         else
             printf "${COLOR_FAILURE}unsupported architecture${COLOR_RESET}\n"
