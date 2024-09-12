@@ -1,9 +1,11 @@
-name: Rust-static-build
+name: Linux x86_64 Build
 on:
+  workflow_dispatch:
   push:
-    branches: [ master ]
+    tags:
+      - v*
   pull_request:
-    branches: [ master ]
+    branches: ["main"]
 env:
   CARGO_TERM_COLOR: always
   BUILD_TARGET: x86_64-unknown-linux-musl
@@ -12,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Build-musl
       uses: gmiam/rust-musl-action@master
       with:
