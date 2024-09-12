@@ -21,7 +21,7 @@ KUVPN is a simple Rust cli to retrieve the DSID cookie and execute the OpenConne
 # Binary Install (Recommended)
 
 ```
-curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | sh
+curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
 ```
 
 __Note: Always inspect scripts before running commands from the internet!__
