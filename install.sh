@@ -57,10 +57,14 @@ if [ ! -d "$HOME/.kuvpn/bin" ]; then
 fi
 
 # Prompt for confirmation
-read -p "This script will install KUVPN in $HOME/.kuvpn/bin and add it to your PATH. Do you want to continue? (yes/no): " confirm
-if [ "$confirm" != "yes" ]; then
-    echo "Installation aborted."
-    exit 0
+if [ -t 1 ]; then
+    read -p "This script will install KUVPN in $HOME/.kuvpn/bin and add it to your PATH. Do you want to continue? (yes/no): " confirm
+    if [ "$confirm" != "yes" ]; then
+        echo "Installation aborted."
+        exit 0
+    fi
+else
+    echo "Non-interactive shell detected. Proceeding with installation..."
 fi
 
 # Download the CLI
