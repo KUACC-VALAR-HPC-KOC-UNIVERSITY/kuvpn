@@ -56,6 +56,13 @@ if [ ! -d "$HOME/.kuvpn/bin" ]; then
     }
 fi
 
+# Prompt for confirmation
+read -p "This script will install KUVPN in $HOME/.kuvpn/bin and add it to your PATH. Do you want to continue? (yes/no): " confirm
+if [ "$confirm" != "yes" ]; then
+    echo "Installation aborted."
+    exit 0
+fi
+
 # Download the CLI
 printf "${COLOR_PRIMARY}Downloading KUVPN...${COLOR_RESET}\n\n"
 curl --proto '=https' --tlsv1.2 -sSfL "$CLI_DOWNLOAD_URL" -o "$HOME/.kuvpn/bin/kuvpn" || {
@@ -67,24 +74,31 @@ chmod +x "$HOME/.kuvpn/bin/kuvpn"
 # Add to PATH
 printf "${COLOR_PRIMARY}Adding KUVPN to PATH...${COLOR_RESET}\n\n"
 if echo "$PATH" | grep -qv "$HOME/.kuvpn/bin"; then
-    if [ -f "$HOME/.bashrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
+    if [ -f "$HOME/.bashrc" ] && [ -w "$HOME/.bashrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
         echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bashrc"
         echo "Run 'source $HOME/.bashrc' or restart your terminal to apply the changes."
-    elif [ -f "$HOME/.bash_profile" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
+    elif [ -f "$HOME/.bash_profile" ] && [ -w "$HOME/.bash_profile" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
         echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bash_profile"
         echo "Run 'source $HOME/.bash_profile' or restart your terminal to apply the changes."
-    elif [ -f "$HOME/.zshrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
+    elif [ -f "$HOME/.zshrc" ] && [ -w "$HOME/.zshrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
         echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.zshrc"
         echo "Run 'source $HOME/.zshrc' or restart your terminal to apply the changes."
+    elif [ -f "$HOME/.config/fish/config.fish" ] && [ -w "$HOME/.config/fish/config.fish" ] && ! grep -q 'set -gx PATH $PATH $HOME/.kuvpn/bin' "$HOME/.config/fish/config.fish"; then
+        echo 'set -gx PATH $PATH $HOME/.kuvpn/bin' >> "$HOME/.config/fish/config.fish"
+        echo "Run 'source $HOME/.config/fish/config.fish' or restart your terminal to apply the changes."
     else
-        printf "${COLOR_WARN}Shell profile not detected. You may need to manually add KUVPN to your shell profile.${COLOR_RESET}\n"
+        printf "${COLOR_WARN}Shell profile not detected or is read-only. You may need to manually add $HOME/.kuvpn/bin to your shell profile.${COLOR_RESET}\n"
     fi
 fi
 
-# Notify for non-bash or zsh shells
-echo ""
-printf "${COLOR_WARN}If you are using a shell other than bash or zsh, please add the following line to your shell profile manually:${COLOR_RESET}\n"
-echo 'export PATH=$PATH:$HOME/.kuvpn/bin'
+# Auto-source for bash, zsh, and fish
+if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc"
+elif [ -f "$HOME/.zshrc" ]; then
+    source "$HOME/.zshrc"
+elif [ -f "$HOME/.config/fish/config.fish" ]; then
+    fish -c "source $HOME/.config/fish/config.fish"
+fi
 
 echo ""
 printf "${COLOR_SUCCESS}Installation complete!${COLOR_RESET}\n"
