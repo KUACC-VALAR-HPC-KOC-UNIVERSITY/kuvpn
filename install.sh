@@ -54,21 +54,6 @@ if [ ! -d "$HOME/.kuvpn/bin" ]; then
     }
 fi
 
-# Check if in interactive shell, if not proceed automatically
-if [ -t 1 ]; then
-    read -p "This script will install KUVPN in $HOME/.kuvpn/bin and add it to your PATH. Do you want to continue? (yes/no) [yes]: " confirm
-    confirm=${confirm:-yes}
-else
-    echo "Non-interactive shell detected. Proceeding with installation..."
-    confirm="yes"
-fi
-
-# Confirm installation
-if [ "$confirm" != "yes" ]; then
-    echo "Installation aborted."
-    exit 0
-fi
-
 # Download the CLI
 printf "${COLOR_PRIMARY}Downloading KUVPN...${COLOR_RESET}\n\n"
 curl --proto '=https' --tlsv1.2 -sSfL "$CLI_DOWNLOAD_URL" -o "$HOME/.kuvpn/bin/kuvpn" || {
