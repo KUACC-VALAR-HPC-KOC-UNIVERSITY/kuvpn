@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Installation script for KUVPN
 # This script will download KUVPN and install it in $HOME/.kuvpn/bin
 # It will also add $HOME/.kuvpn/bin to PATH
