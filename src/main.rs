@@ -124,6 +124,7 @@ fn create_browser(agent: &str) -> Result<Browser, Box<dyn Error>> {
         .headless(false)
         .sandbox(false)
         .idle_browser_timeout(Duration::MAX)
+        .window_size(Some((800, 800)))
         .args(vec![
             body.as_os_str(),
             window.as_os_str(),
@@ -175,14 +176,20 @@ pub fn execute_openconnect(
     // If a custom run command is provided, check if it's available and prioritize it
     if let Some(custom_command) = run_command {
         info!("Custom run command provided: {}", custom_command);
-        
+
         if which(custom_command).is_ok() {
             info!("Custom command found: {}", custom_command);
             default_tools.insert(0, custom_command.as_str());
         } else {
             // Print message and fallback to default tools
-            println!("Custom command '{}' not found, falling back to default tools.", custom_command);
-            info!("Custom command '{}' could not be found, using default tools.", custom_command);
+            println!(
+                "Custom command '{}' not found, falling back to default tools.",
+                custom_command
+            );
+            info!(
+                "Custom command '{}' could not be found, using default tools.",
+                custom_command
+            );
         }
     } else {
         info!("No custom run command provided, defaulting to built-in tools.");
@@ -192,7 +199,8 @@ pub fn execute_openconnect(
     info!("Checking for available tools/commands: {:?}", default_tools);
 
     // Check for the first available tool/command
-    let command_to_run = default_tools.iter()
+    let command_to_run = default_tools
+        .iter()
         .find_map(|&tool| {
             if which(tool).is_ok() {
                 Some(tool)
