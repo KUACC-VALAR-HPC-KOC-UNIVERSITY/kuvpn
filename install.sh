@@ -1,7 +1,7 @@
 #!/bin/bash
 # Installation script for KUVPN
 # This script will download KUVPN and install it in $HOME/.kuvpn/bin
-# It will also add $HOME/.kuvpn/bin to PATH
+# It will also add $HOME/.kuvpn/bin to PATH for all present shells
 
 COLOR_PRIMARY="\033[0;34m"
 COLOR_WARN="\033[1;33m"
@@ -63,33 +63,56 @@ curl --proto '=https' --tlsv1.2 -sSfL "$CLI_DOWNLOAD_URL" -o "$HOME/.kuvpn/bin/k
 chmod +x "$HOME/.kuvpn/bin/kuvpn"
 
 # Add to PATH
-printf "${COLOR_PRIMARY}Adding KUVPN to PATH...${COLOR_RESET}\n\n"
-if echo "$PATH" | grep -qv "$HOME/.kuvpn/bin"; then
-    if [ -f "$HOME/.bashrc" ] && [ -w "$HOME/.bashrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
-        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bashrc"
-        echo "Run 'source $HOME/.bashrc' or restart your terminal to apply the changes."
-    elif [ -f "$HOME/.bash_profile" ] && [ -w "$HOME/.bash_profile" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
-        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bash_profile"
-        echo "Run 'source $HOME/.bash_profile' or restart your terminal to apply the changes."
-    elif [ -f "$HOME/.zshrc" ] && [ -w "$HOME/.zshrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
-        echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.zshrc"
-        echo "Run 'source $HOME/.zshrc' or restart your terminal to apply the changes."
-    elif [ -f "$HOME/.config/fish/config.fish" ] && [ -w "$HOME/.config/fish/config.fish" ] && ! grep -q 'set -gx PATH $PATH $HOME/.kuvpn/bin' "$HOME/.config/fish/config.fish"; then
-        echo 'set -gx PATH $PATH $HOME/.kuvpn/bin' >> "$HOME/.config/fish/config.fish"
-        echo "Run 'source $HOME/.config/fish/config.fish' or restart your terminal to apply the changes."
-    else
-        printf "${COLOR_WARN}Shell profile not detected or is read-only. You may need to manually add $HOME/.kuvpn/bin to your shell profile.${COLOR_RESET}\n"
-    fi
+printf "${COLOR_PRIMARY}Adding KUVPN to PATH for all shells...${COLOR_RESET}\n\n"
+ADDED_TO_SHELL=false
+
+if [ -f "$HOME/.bashrc" ] && [ -w "$HOME/.bashrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bashrc"; then
+    echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bashrc"
+    ADDED_TO_SHELL=true
 fi
 
-# Auto-source for bash, zsh, and fish
-if [ -f "$HOME/.bashrc" ]; then
-    source "$HOME/.bashrc"
-elif [ -f "$HOME/.zshrc" ]; then
-    source "$HOME/.zshrc"
-elif [ -f "$HOME/.config/fish/config.fish" ]; then
-    fish -c "source $HOME/.config/fish/config.fish"
+if [ -f "$HOME/.bash_profile" ] && [ -w "$HOME/.bash_profile" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.bash_profile"; then
+    echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.bash_profile"
+    ADDED_TO_SHELL=true
 fi
+
+if [ -f "$HOME/.zshrc" ] && [ -w "$HOME/.zshrc" ] && ! grep -q 'export PATH=$PATH:$HOME/.kuvpn/bin' "$HOME/.zshrc"; then
+    echo 'export PATH=$PATH:$HOME/.kuvpn/bin' >> "$HOME/.zshrc"
+    ADDED_TO_SHELL=true
+fi
+
+if [ -f "$HOME/.config/fish/config.fish" ] && [ -w "$HOME/.config/fish/config.fish" ] && ! grep -q 'set -gx PATH $PATH $HOME/.kuvpn/bin' "$HOME/.config/fish/config.fish"; then
+    echo 'set -gx PATH $PATH $HOME/.kuvpn/bin' >> "$HOME/.config/fish/config.fish"
+    ADDED_TO_SHELL=true
+fi
+
+if [ "$ADDED_TO_SHELL" = false ]; then
+    printf "${COLOR_WARN}Shell profile not detected or is read-only. You may need to manually add $HOME/.kuvpn/bin to your shell profile.${COLOR_RESET}\n"
+fi
+
+# Auto-source for the currently running shell
+CURRENT_SHELL=$(basename "$SHELL")
+
+case "$CURRENT_SHELL" in
+    bash)
+        if [ -f "$HOME/.bashrc" ]; then
+            source "$HOME/.bashrc"
+        fi
+        ;;
+    zsh)
+        if [ -f "$HOME/.zshrc" ]; then
+            source "$HOME/.zshrc"
+        fi
+        ;;
+    fish)
+        if [ -f "$HOME/.config/fish/config.fish" ]; then
+            fish -c "source $HOME/.config/fish/config.fish"
+        fi
+        ;;
+    *)
+        printf "${COLOR_WARN}Unable to auto-source the shell configuration for $CURRENT_SHELL. Please restart your terminal to apply changes.${COLOR_RESET}\n"
+        ;;
+esac
 
 echo ""
 printf "${COLOR_SUCCESS}Installation complete!${COLOR_RESET}\n"
