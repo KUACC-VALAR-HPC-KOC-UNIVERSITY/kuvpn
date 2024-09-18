@@ -90,29 +90,11 @@ if [ "$ADDED_TO_SHELL" = false ]; then
     printf "${COLOR_WARN}Shell profile not detected or is read-only. You may need to manually add $HOME/.kuvpn/bin to your shell profile.${COLOR_RESET}\n"
 fi
 
-# Auto-source for the currently running shell
-CURRENT_SHELL=$(basename "$SHELL")
+# Start a new shell session using the user's default shell from /etc/passwd
+USER_DEFAULT_SHELL=$(getent passwd "$USER" | cut -d: -f7)
 
-case "$CURRENT_SHELL" in
-    bash)
-        if [ -f "$HOME/.bashrc" ]; then
-            source "$HOME/.bashrc"
-        fi
-        ;;
-    zsh)
-        if [ -f "$HOME/.zshrc" ]; then
-            source "$HOME/.zshrc"
-        fi
-        ;;
-    fish)
-        if [ -f "$HOME/.config/fish/config.fish" ]; then
-            fish -c "source $HOME/.config/fish/config.fish"
-        fi
-        ;;
-    *)
-        printf "${COLOR_WARN}Unable to auto-source the shell configuration for $CURRENT_SHELL. Please restart your terminal to apply changes.${COLOR_RESET}\n"
-        ;;
-esac
+printf "${COLOR_PRIMARY}Starting a new shell session using your default shell (${USER_DEFAULT_SHELL}) to apply changes...${COLOR_RESET}\n"
+exec "$USER_DEFAULT_SHELL" -l
 
 echo ""
 printf "${COLOR_SUCCESS}Installation complete!${COLOR_RESET}\n"
