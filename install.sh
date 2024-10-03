@@ -90,24 +90,8 @@ if [ "$ADDED_TO_SHELL" = false ]; then
     printf "${COLOR_WARN}Shell profile not detected or is read-only. You may need to manually add $HOME/.kuvpn/bin to your shell profile.${COLOR_RESET}\n"
 fi
 
-# Determine the default shell based on the operating system
-if [ "$OS" = "Darwin" ]; then
-    # macOS uses dscl to get the user's default shell
-    USER_DEFAULT_SHELL=$(dscl . -read /Users/"$USER" UserShell | awk '{print $2}')
-else
-    # Linux typically uses getent
-    USER_DEFAULT_SHELL=$(getent passwd "$USER" | cut -d: -f7)
-fi
-
-# If we couldn't determine the user's default shell, fall back to bash
-if [ -z "$USER_DEFAULT_SHELL" ]; then
-    printf "${COLOR_WARNING}Could not determine the user's default shell. Falling back to bash...${COLOR_RESET}\n"
-    USER_DEFAULT_SHELL="/bin/bash"
-fi
-
 # Start a new shell session using the user's default shell
-printf "${COLOR_PRIMARY}Starting a new shell session using your default shell (${USER_DEFAULT_SHELL}) to apply changes...${COLOR_RESET}\n"
-exec "$USER_DEFAULT_SHELL"
+printf "${COLOR_SUCCESS}Please restart the shell (terminal) session to apply changes...${COLOR_RESET}\n"
 
 echo ""
 printf "${COLOR_SUCCESS}Installation complete!${COLOR_RESET}\n"
