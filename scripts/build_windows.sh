@@ -34,6 +34,7 @@ echo "Building $APP_NAME for Windows..."
 # 1. Cross-compile Rust binaries
 rustup target add x86_64-pc-windows-gnu
 cargo build -p kuvpn-gui --release --target x86_64-pc-windows-gnu
+cargo build -p kuvpn-win-helper --release --target x86_64-pc-windows-gnu
 
 # 2. Download and prepare OpenConnect
 echo "Preparing OpenConnect binaries..."

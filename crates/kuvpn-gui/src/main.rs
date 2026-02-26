@@ -11,6 +11,7 @@ mod view;
 use crate::app::KuVpnGui;
 use crate::tray::init_tray;
 use crate::types::Message;
+#[cfg(not(windows))]
 use iced::Task;
 use std::sync::{Arc, Mutex};
 
@@ -78,10 +79,12 @@ pub fn main() -> iced::Result {
 
             (
                 gui,
-                Task::batch(vec![
-                    task.map(Message::WindowOpened),
-                    Task::done(Message::TestOpenConnect),
-                ]),
+                {
+                    #[cfg(not(windows))]
+                    { Task::batch(vec![task.map(Message::WindowOpened), Task::done(Message::TestOpenConnect)]) }
+                    #[cfg(windows)]
+                    { task.map(Message::WindowOpened) }
+                },
             )
         },
         KuVpnGui::update,

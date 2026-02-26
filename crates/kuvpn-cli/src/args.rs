@@ -63,6 +63,7 @@ pub struct Args {
 
     /// Path or command name for openconnect. Defaults to 'openconnect'.
     /// Can be a relative or absolute path.
+    #[cfg(not(windows))]
     #[arg(long, default_value = "openconnect")]
     pub openconnect_path: String,
 

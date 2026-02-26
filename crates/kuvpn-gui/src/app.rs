@@ -36,12 +36,15 @@ pub struct KuVpnGui {
     pub error_message: Option<String>,
     pub error_category: Option<kuvpn::ErrorCategory>,
     pub rotation: f32,
+    #[cfg(not(windows))]
     pub oc_test_result: Option<bool>,
     pub automation_warning: Option<String>,
     /// Set when the Test button resolves a different path than what was entered.
+    #[cfg(not(windows))]
     pub oc_path_notification: Option<String>,
     /// True after the first (startup) auto-test completes; used to suppress
     /// the replacement notification for the initial auto-detection pass.
+    #[cfg(not(windows))]
     pub oc_startup_tested: bool,
 
     // VPN Session
@@ -276,6 +279,7 @@ impl KuVpnGui {
                 self.save_settings();
                 Task::none()
             }
+            #[cfg(not(windows))]
             Message::OpenConnectPathChanged(p) => {
                 self.settings.openconnect_path = p;
                 self.oc_test_result = None;
@@ -324,6 +328,7 @@ impl KuVpnGui {
                         } else {
                             Some(self.settings.email.clone())
                         },
+                        #[cfg(not(windows))]
                         openconnect_path: if self.settings.openconnect_path.is_empty() {
                             "openconnect".to_string()
                         } else {
@@ -621,9 +626,12 @@ impl KuVpnGui {
                     self.settings.escalation_tool = self.available_escalation_tools[0].to_string();
                 }
                 self.save_settings();
-                self.oc_test_result = None;
-                self.oc_path_notification = None;
-                self.oc_startup_tested = false; // treat the next test as a fresh startup
+                #[cfg(not(windows))]
+                {
+                    self.oc_test_result = None;
+                    self.oc_path_notification = None;
+                    self.oc_startup_tested = false; // treat the next test as a fresh startup
+                }
 
                 // If window decoration setting changed, refresh window
                 if old_use_csd != self.settings.use_client_decorations {
@@ -645,6 +653,7 @@ impl KuVpnGui {
                 }
                 Task::none()
             }
+            #[cfg(not(windows))]
             Message::TestOpenConnect => {
                 let path = self.settings.openconnect_path.clone();
                 Task::perform(
@@ -654,6 +663,7 @@ impl KuVpnGui {
                     Message::OpenConnectTestResult,
                 )
             }
+            #[cfg(not(windows))]
             Message::OpenConnectTestResult(resolved) => {
                 let old_path = self.settings.openconnect_path.trim().to_string();
                 self.oc_test_result = Some(resolved.is_some());
@@ -823,7 +833,10 @@ impl KuVpnGui {
 
 impl Default for KuVpnGui {
     fn default() -> Self {
+        #[cfg(unix)]
         let mut settings = GuiSettings::load();
+        #[cfg(not(unix))]
+        let settings = GuiSettings::load();
 
         if let Ok(mut guard) = crate::logger::GUI_LOGGER.user_level.lock() {
             *guard = log_level_from_slider(settings.log_level_val);
@@ -865,9 +878,12 @@ impl Default for KuVpnGui {
             error_message: None,
             error_category: None,
             rotation: 0.0,
+            #[cfg(not(windows))]
             oc_test_result: None,
             automation_warning: None,
+            #[cfg(not(windows))]
             oc_path_notification: None,
+            #[cfg(not(windows))]
             oc_startup_tested: false,
             session: None,
             tray_icon: None,

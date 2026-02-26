@@ -114,6 +114,7 @@ impl KuVpnGui {
         // visible there is no phantom gap between the title bar and the tab bar.
         let mut col: Column<'_, Message> = Column::new().spacing(12).width(Length::Fill);
 
+        #[cfg(not(windows))]
         if self.oc_test_result == Some(false) {
             col = col.push(self.view_warning_banner(
                 "OpenConnect not found! Please install it or set path in Settings.",

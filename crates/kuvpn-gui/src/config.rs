@@ -8,6 +8,7 @@ pub struct GuiSettings {
     pub email: String,
     pub escalation_tool: String,
     pub log_level_val: f32,
+    #[cfg(not(windows))]
     pub openconnect_path: String,
     pub login_mode_val: f32,
     pub close_to_tray: bool,
@@ -28,6 +29,7 @@ impl Default for GuiSettings {
             email: String::new(),
             escalation_tool: "sudo".to_string(),
             log_level_val: 3.0, // Default: Info level
+            #[cfg(not(windows))]
             openconnect_path: "openconnect".to_string(),
             login_mode_val: 0.0,
             close_to_tray: true,

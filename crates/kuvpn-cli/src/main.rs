@@ -194,6 +194,7 @@ fn main() -> ExitCode {
         headless: !args.disable_headless,
         no_auto_login: args.no_auto_login,
         email: args.email.clone(),
+        #[cfg(not(windows))]
         openconnect_path: args.openconnect_path.clone(),
         escalation_tool: args.run_command.clone(),
         interface_name: args.interface_name.clone(),

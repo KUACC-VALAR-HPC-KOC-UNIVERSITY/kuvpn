@@ -65,6 +65,7 @@ pub enum Message {
     DomainChanged(String),
     EscalationToolChanged(String),
     LogLevelSliderChanged(f32),
+    #[cfg(not(windows))]
     OpenConnectPathChanged(String),
     EmailChanged(String),
     LoginModeChanged(f32),
@@ -90,7 +91,9 @@ pub enum Message {
     ResetClosePending,
     GtkTick,
     ResetSettings,
+    #[cfg(not(windows))]
     TestOpenConnect,
+    #[cfg(not(windows))]
     OpenConnectTestResult(Option<String>),
     CopyLogs,
     DragWindow,

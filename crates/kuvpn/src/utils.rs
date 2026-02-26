@@ -114,7 +114,7 @@ pub fn ensure_single_instance() -> Result<(), Box<dyn Error>> {
             LockFileEx(
                 HANDLE(handle as _),
                 LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
-                0,
+                None,
                 1,
                 0,
                 &mut overlapped,

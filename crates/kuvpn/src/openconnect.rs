@@ -2,12 +2,8 @@ use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::process::Command;
 use std::process::{Child, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use which::which;
 
-#[cfg(windows)]
-use runas::Command as AdminCommand;
 #[cfg(windows)]
 use sysinfo::System;
 
@@ -15,9 +11,8 @@ pub enum VpnProcess {
     Unix(Child),
     Windows {
         interface_name: String,
-        /// Set to true when the runas background thread finishes
-        /// (openconnect exited or elevation was denied).
-        thread_finished: Arc<AtomicBool>,
+        #[cfg(windows)]
+        helper: crate::win_elevated::WinElevatedClient,
     },
 }
 
@@ -83,60 +78,27 @@ impl VpnProcess {
                 }
                 Ok(())
             }
-            VpnProcess::Windows { .. } => {
+            VpnProcess::Windows {
+                #[cfg(windows)]
+                ref mut helper,
+                ..
+            } => {
                 #[cfg(windows)]
                 {
                     use std::os::windows::process::CommandExt;
                     use std::process::Command as StdCommand;
                     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-                    log::info!("Requesting Admin elevation to stop OpenConnect...");
-
-                    // 1. Try killing openconnect.exe by name using Admin elevation
-                    let mut cmd = AdminCommand::new("taskkill");
-                    cmd.show(false);
-                    cmd.args(&["/F", "/IM", "openconnect.exe", "/T"]);
-                    let _ = cmd.status();
-
-                    // Check if process was killed successfully
-                    std::thread::sleep(std::time::Duration::from_millis(500));
-                    if !is_openconnect_running() {
-                        log::info!("OpenConnect terminated successfully");
-                        return Ok(());
+                    // Route through the already-elevated helper — no UAC prompt.
+                    log::info!("Stopping OpenConnect via elevated helper...");
+                    if let Err(e) = helper.stop_openconnect() {
+                        log::warn!("Helper stop failed ({}), trying non-elevated fallback...", e);
+                        // Last resort: non-elevated taskkill (may fail for elevated processes)
+                        let _ = StdCommand::new("taskkill")
+                            .creation_flags(CREATE_NO_WINDOW)
+                            .args(["/F", "/IM", "openconnect.exe"])
+                            .status();
                     }
-
-                    // 2. Try killing openconnect-gui.exe if it exists
-                    let mut cmd_gui = AdminCommand::new("taskkill");
-                    cmd_gui.show(false);
-                    cmd_gui.args(&["/F", "/IM", "openconnect-gui.exe", "/T"]);
-                    let _ = cmd_gui.status();
-
-                    std::thread::sleep(std::time::Duration::from_millis(500));
-                    if !is_openconnect_running() {
-                        log::info!("OpenConnect GUI terminated successfully");
-                        return Ok(());
-                    }
-
-                    // 3. Try killing by PID specifically if found
-                    if let Some(pid) = get_openconnect_pid() {
-                        let mut cmd_pid = AdminCommand::new("taskkill");
-                        cmd_pid.show(false);
-                        cmd_pid.args(&["/F", "/PID", &pid.to_string(), "/T"]);
-                        let _ = cmd_pid.status();
-
-                        std::thread::sleep(std::time::Duration::from_millis(500));
-                        if !is_openconnect_running() {
-                            log::info!("OpenConnect terminated by PID");
-                            return Ok(());
-                        }
-                    }
-
-                    // 4. Last resort: non-elevated taskkill
-                    log::warn!("Elevated termination failed, trying non-elevated fallback...");
-                    let _ = StdCommand::new("taskkill")
-                        .creation_flags(CREATE_NO_WINDOW)
-                        .args(["/F", "/IM", "openconnect.exe"])
-                        .status();
                 }
                 Ok(())
             }
@@ -160,17 +122,13 @@ impl VpnProcess {
                 #[cfg(not(unix))]
                 false
             }
-            VpnProcess::Windows {
-                ref thread_finished,
-                ..
-            } => {
-                // If the runas thread is still running, the process is alive
-                // (UAC prompt showing, or openconnect actively running).
-                // Only check process list after the thread has finished.
-                if !thread_finished.load(Ordering::SeqCst) {
-                    return true;
+            VpnProcess::Windows { .. } => {
+                #[cfg(windows)]
+                {
+                    return is_openconnect_running();
                 }
-                is_openconnect_running()
+                #[cfg(not(windows))]
+                false
             }
         }
     }
@@ -181,18 +139,18 @@ impl VpnProcess {
                 child.wait()?;
                 Ok(())
             }
-            VpnProcess::Windows {
-                ref thread_finished,
-                ..
-            } => {
-                // Wait until the runas thread finishes (openconnect exits)
-                // with a timeout to prevent hanging the session thread.
-                let start = std::time::Instant::now();
-                while !thread_finished.load(Ordering::SeqCst) {
-                    if start.elapsed() > std::time::Duration::from_secs(5) {
-                        break;
+            VpnProcess::Windows { .. } => {
+                // The helper manages the openconnect lifetime.
+                // Poll until openconnect exits (or give up after a timeout).
+                #[cfg(windows)]
+                {
+                    let start = std::time::Instant::now();
+                    while is_openconnect_running() {
+                        if start.elapsed() > std::time::Duration::from_secs(5) {
+                            break;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(200));
                     }
-                    std::thread::sleep(std::time::Duration::from_millis(200));
                 }
                 Ok(())
             }
@@ -481,7 +439,7 @@ pub fn execute_openconnect(
     cookie_value: String,
     url: String,
     _run_command: &Option<String>,
-    openconnect_path: &Path,
+    _openconnect_path: &Path,
     _stdout: Stdio,
     _stderr: Stdio,
     interface_name: &str,
@@ -532,7 +490,7 @@ pub fn execute_openconnect(
             cmd.stdin(Stdio::piped());
         }
 
-        cmd.arg(openconnect_path).arg("--protocol").arg("nc");
+        cmd.arg(_openconnect_path).arg("--protocol").arg("nc");
 
         // macOS does not support custom TUN interface names; OpenConnect auto-assigns a
         // utun%d interface. Only pass --interface on Linux and other non-macOS Unix.
@@ -564,41 +522,27 @@ pub fn execute_openconnect(
 
     #[cfg(windows)]
     {
-        log::info!("Requesting Admin elevation for OpenConnect...");
+        // Find the helper binary next to the current executable.
+        let helper_exe = std::env::current_exe()?
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("Cannot determine executable directory"))?
+            .join("kuvpn-win-helper.exe");
 
-        let interface_name_owned = interface_name.to_string();
-        let mut cmd = AdminCommand::new(openconnect_path.to_str().unwrap());
-        cmd.show(false);
-        cmd.arg("--protocol")
-            .arg("nc")
-            .arg("-C")
-            .arg(format!("DSID={}", cookie_value));
+        if !helper_exe.exists() {
+            anyhow::bail!(
+                "kuvpn-win-helper.exe not found next to the main executable. \
+                 Please reinstall KUVPN."
+            );
+        }
 
-        cmd.arg(url);
-
-        // runas 1.2.0 might only have status() which blocks.
-        // We run it in a thread so we don't block the caller.
-        // The thread_finished flag lets the watchdog know when the process exits.
-        let thread_finished = Arc::new(AtomicBool::new(false));
-        let finished_clone = Arc::clone(&thread_finished);
-
-        std::thread::spawn(move || {
-            match cmd.status() {
-                Ok(status) => {
-                    if !status.success() {
-                        log::error!("OpenConnect process exited with failure.");
-                    }
-                }
-                Err(e) => {
-                    log::error!("Failed to run elevated OpenConnect: {}", e);
-                }
-            }
-            finished_clone.store(true, Ordering::SeqCst);
-        });
+        // Launch helper elevated (one UAC prompt) and start openconnect through it.
+        // No exe path is sent over the wire; the helper resolves openconnect locally.
+        let mut helper = crate::win_elevated::WinElevatedClient::launch(&helper_exe)?;
+        helper.start_openconnect(&format!("DSID={}", cookie_value), &url)?;
 
         Ok(VpnProcess::Windows {
-            interface_name: interface_name_owned,
-            thread_finished,
+            interface_name: interface_name.to_string(),
+            helper,
         })
     }
 }
@@ -766,10 +710,14 @@ pub fn kill_process(pid: u32) -> anyhow::Result<()> {
     }
     #[cfg(windows)]
     {
-        let mut cmd = AdminCommand::new("taskkill");
-        cmd.show(false);
-        cmd.arg("/F").arg("/T").arg("/PID").arg(pid.to_string());
-        cmd.status()?;
+        use std::os::windows::process::CommandExt;
+        use std::process::Command as StdCommand;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        // Non-elevated fallback — the helper-based path is the primary stop mechanism.
+        let _ = StdCommand::new("taskkill")
+            .creation_flags(CREATE_NO_WINDOW)
+            .args(["/F", "/T", "/PID", &pid.to_string()])
+            .status();
     }
     Ok(())
 }

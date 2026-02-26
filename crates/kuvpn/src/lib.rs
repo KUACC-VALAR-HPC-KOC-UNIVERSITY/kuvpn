@@ -11,6 +11,8 @@ pub mod logger;
 pub mod openconnect;
 pub mod session;
 pub mod utils;
+#[cfg(windows)]
+pub mod win_elevated;
 
 // Re-export commonly used items
 pub use dsid::run_login_and_get_dsid;

@@ -1,8 +1,10 @@
 use crate::dsid::run_login_and_get_dsid;
 use crate::openconnect::{
     execute_openconnect, get_openconnect_pid, is_openconnect_running, is_vpn_interface_up,
-    kill_process, locate_openconnect, VpnProcess,
+    kill_process, VpnProcess,
 };
+#[cfg(not(windows))]
+use crate::openconnect::locate_openconnect;
 use crate::utils::{CancellationToken, CredentialsProvider};
 use std::io::{BufRead, BufReader};
 use std::process::Stdio;
@@ -64,6 +66,9 @@ pub struct SessionConfig {
     pub headless: bool,
     pub no_auto_login: bool,
     pub email: Option<String>,
+    /// Path/name of the openconnect binary to locate and run.
+    /// Not used on Windows — the elevated helper resolves it from its own directory.
+    #[cfg(not(windows))]
     pub openconnect_path: String,
     pub escalation_tool: Option<String>,
     pub interface_name: String,
@@ -243,6 +248,8 @@ impl VpnSession {
                 thread::sleep(Duration::from_millis(100));
 
                 // 2. Locate OpenConnect
+                // On Windows the elevated helper resolves the binary itself — no lookup needed.
+                #[cfg(not(windows))]
                 let oc_path = match locate_openconnect(&config.openconnect_path) {
                     Some(p) => p,
                     None => {
@@ -260,6 +267,9 @@ impl VpnSession {
                         return;
                     }
                 };
+                // On Windows: dummy value — execute_openconnect ignores it.
+                #[cfg(windows)]
+                let oc_path = std::path::PathBuf::new();
 
                 // 2.5. Check if we need to prompt for sudo password.
                 // Uses the CredentialsProvider so both CLI (dialoguer) and GUI (modal)

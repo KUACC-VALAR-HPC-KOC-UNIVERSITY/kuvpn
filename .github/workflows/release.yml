@@ -116,6 +116,7 @@ jobs:
         run: |
           cargo build --release -p kuvpn-cli
           cargo build --release -p kuvpn-gui
+          cargo build --release -p kuvpn-win-helper
 
       - name: Download OpenConnect
         shell: bash
@@ -147,6 +148,7 @@ jobs:
           # Copy the binaries so the ISS file can find them
           mkdir -p target/x86_64-pc-windows-gnu/release
           cp target/release/kuvpn-gui.exe target/x86_64-pc-windows-gnu/release/kuvpn-gui.exe
+          cp target/release/kuvpn-win-helper.exe target/x86_64-pc-windows-gnu/release/kuvpn-win-helper.exe
 
       - name: Build Installer
         run: iscc packaging/windows/kuvpn.iss
@@ -157,6 +159,7 @@ jobs:
           name: kuvpn-windows-x64
           path: |
             target/release/kuvpn-cli.exe
+            target/release/kuvpn-win-helper.exe
             packaging/windows/KUVPN-Setup.exe
 
   # ─── macOS (native builds on both architectures) ────────────────────
@@ -357,7 +360,8 @@ jobs:
           cp artifacts/kuvpn-windows-x64/packaging/windows/KUVPN-Setup.exe release/KUVPN-Setup-windows-x86_64.exe
           mkdir -p extras-windows
           cp artifacts/kuvpn-windows-x64/target/release/kuvpn-cli.exe extras-windows/kuvpn-windows-x86_64.exe
-          cd extras-windows && zip ../release/kuvpn-extras-windows-x86_64.zip kuvpn-windows-x86_64.exe && cd ..
+          cp artifacts/kuvpn-windows-x64/target/release/kuvpn-win-helper.exe extras-windows/kuvpn-win-helper.exe
+          cd extras-windows && zip ../release/kuvpn-extras-windows-x86_64.zip kuvpn-windows-x86_64.exe kuvpn-win-helper.exe && cd ..
 
           # macOS CLI  →  kuvpn-macos-<arch>
           # macOS GUI  →  KUVPN-macOS-<arch>.dmg

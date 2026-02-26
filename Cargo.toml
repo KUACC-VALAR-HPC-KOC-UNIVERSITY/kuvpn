@@ -3,6 +3,7 @@ members = [
     "crates/kuvpn",
     "crates/kuvpn-cli",
     "crates/kuvpn-gui",
+    "crates/kuvpn-win-helper",
 ]
 resolver = "2"
 
