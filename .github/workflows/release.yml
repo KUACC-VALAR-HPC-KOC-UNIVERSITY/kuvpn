@@ -1,0 +1,447 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ─── Linux CLI (static musl binaries) ───────────────────────────────
+  linux-cli-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          cache: true
+          rustflags: ""
+
+      - name: Install musl-tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build CLI
+        run: cargo build --target x86_64-unknown-linux-musl --release -p kuvpn-cli
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-cli-linux-x86_64
+          path: target/x86_64-unknown-linux-musl/release/kuvpn-cli
+
+  linux-cli-aarch64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build CLI for aarch64
+        uses: houseabsolute/actions-rust-cross@v0
+        with:
+          target: aarch64-unknown-linux-musl
+          args: "--release -p kuvpn-cli"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-cli-linux-aarch64
+          path: target/aarch64-unknown-linux-musl/release/kuvpn-cli
+
+  # ─── Linux AppImage (x86_64, built in container) ────────────────────
+  linux-appimage-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build AppImage in Docker
+        run: |
+          docker build -t kuvpn-appimage-builder -f packaging/appimage/Dockerfile .
+          CONTAINER_ID=$(docker create kuvpn-appimage-builder)
+          mkdir -p dist
+          docker cp "$CONTAINER_ID":/build/dist/. dist/
+          docker rm "$CONTAINER_ID"
+
+      - name: Upload Minimal AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-appimage-x86_64
+          path: dist/KUVPN-minimal-x86_64.AppImage
+
+  # ─── Linux AppImage (aarch64, built natively on arm64 runner) ──────────
+  linux-appimage-aarch64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build AppImage in Docker
+        run: |
+          docker build -t kuvpn-appimage-builder-aarch64 -f packaging/appimage/Dockerfile .
+          CONTAINER_ID=$(docker create kuvpn-appimage-builder-aarch64)
+          mkdir -p dist
+          docker cp "$CONTAINER_ID":/build/dist/. dist/
+          docker rm "$CONTAINER_ID"
+
+      - name: Upload Minimal AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-appimage-aarch64
+          path: dist/KUVPN-minimal-aarch64.AppImage
+
+  # ─── Windows (native MSVC build + Inno Setup installer) ─────────────
+  windows-x86_64:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          cache: true
+          rustflags: ""
+
+      - name: Build CLI and GUI
+        run: |
+          cargo build --release -p kuvpn-cli
+          cargo build --release -p kuvpn-gui
+
+      - name: Download OpenConnect
+        shell: bash
+        run: |
+          OC_DIR="packaging/windows/openconnect"
+          mkdir -p "$OC_DIR"
+          curl -L -o /tmp/oc_setup.exe "https://www.infradead.org/openconnect-gui/download/openconnect-gui-1.6.2-win64.exe"
+          7z x -y /tmp/oc_setup.exe -o/tmp/oc_extract > /dev/null || true
+          find /tmp/oc_extract -name "openconnect.exe" -exec cp {} "$OC_DIR/" \; || true
+          find /tmp/oc_extract -name "*.dll" -exec cp {} "$OC_DIR/" \; || true
+          find /tmp/oc_extract -name "vpnc-script.js" -exec cp {} "$OC_DIR/" \; || true
+          TAP_EXE=$(find /tmp/oc_extract -name "tap-windows*.exe" | head -n 1)
+          [ -n "$TAP_EXE" ] && cp "$TAP_EXE" "$OC_DIR/tap-setup.exe" || true
+          rm -rf /tmp/oc_extract
+
+      - name: Download Wintun
+        shell: bash
+        run: |
+          OC_DIR="packaging/windows/openconnect"
+          curl -L -o /tmp/wintun.zip "https://www.wintun.net/builds/wintun-0.14.1.zip"
+          unzip -q /tmp/wintun.zip -d /tmp/wintun_extract
+          cp /tmp/wintun_extract/wintun/bin/amd64/wintun.dll "$OC_DIR/"
+          rm -rf /tmp/wintun_extract
+
+      - name: Fix ISS paths for MSVC build
+        shell: bash
+        run: |
+          # The ISS file expects x86_64-pc-windows-gnu paths, but we build with MSVC
+          # Copy the binaries so the ISS file can find them
+          mkdir -p target/x86_64-pc-windows-gnu/release
+          cp target/release/kuvpn-gui.exe target/x86_64-pc-windows-gnu/release/kuvpn-gui.exe
+          cp target/release/kuvpn-cli.exe target/x86_64-pc-windows-gnu/release/kuvpn-cli.exe
+
+      - name: Build Installer
+        run: iscc packaging/windows/kuvpn.iss
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-windows-x64
+          path: |
+            target/release/kuvpn-cli.exe
+            packaging/windows/KUVPN-Setup.exe
+
+  # ─── macOS (native builds on both architectures) ────────────────────
+  macos-x86_64:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-apple-darwin
+          cache: true
+          rustflags: ""
+
+      - name: Build CLI and GUI
+        run: |
+          cargo build --release -p kuvpn-cli --target x86_64-apple-darwin
+          cargo build --release -p kuvpn-gui --target x86_64-apple-darwin
+
+      - name: Create App Bundle
+        run: |
+          APP_NAME="KUVPN"
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TARGET="x86_64-apple-darwin"
+          APP_BUNDLE="${APP_NAME}.app"
+          rm -rf "$APP_BUNDLE"
+          mkdir -p "$APP_BUNDLE/Contents/MacOS"
+          mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+          cp "target/${TARGET}/release/kuvpn-gui" "$APP_BUNDLE/Contents/MacOS/"
+          cp "target/${TARGET}/release/kuvpn-cli" "$APP_BUNDLE/Contents/MacOS/"
+
+          # Use the pre-generated icns from the repo (128/256/512/1024 px, vpn-normal.svg source).
+          # Updating the icon only requires regenerating assets/kuvpn.icns — no CI changes needed.
+          cp crates/kuvpn-gui/assets/kuvpn.icns "$APP_BUNDLE/Contents/Resources/"
+
+          cat > "$APP_BUNDLE/Contents/Info.plist" <<-PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>kuvpn-gui</string>
+            <key>CFBundleIdentifier</key>
+            <string>tr.edu.ku.kuvpn</string>
+            <key>CFBundleName</key>
+            <string>KUVPN</string>
+            <key>CFBundleVersion</key>
+            <string>${VERSION}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${VERSION}</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleIconFile</key>
+            <string>kuvpn</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>11.0</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Ad-hoc Code Sign
+        run: |
+          codesign --force --deep --sign - KUVPN.app
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "KUVPN" -srcfolder KUVPN.app -ov -format UDZO "KUVPN-x86_64.dmg"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-macos-x86_64
+          path: |
+            target/x86_64-apple-darwin/release/kuvpn-cli
+            KUVPN-x86_64.dmg
+
+  macos-aarch64:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: aarch64-apple-darwin
+          cache: true
+          rustflags: ""
+
+      - name: Build CLI and GUI
+        run: |
+          cargo build --release -p kuvpn-cli --target aarch64-apple-darwin
+          cargo build --release -p kuvpn-gui --target aarch64-apple-darwin
+
+      - name: Create App Bundle
+        run: |
+          APP_NAME="KUVPN"
+          VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          TARGET="aarch64-apple-darwin"
+          APP_BUNDLE="${APP_NAME}.app"
+          rm -rf "$APP_BUNDLE"
+          mkdir -p "$APP_BUNDLE/Contents/MacOS"
+          mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+          cp "target/${TARGET}/release/kuvpn-gui" "$APP_BUNDLE/Contents/MacOS/"
+          cp "target/${TARGET}/release/kuvpn-cli" "$APP_BUNDLE/Contents/MacOS/"
+
+          # Use the pre-generated icns from the repo (128/256/512/1024 px, vpn-normal.svg source).
+          # Updating the icon only requires regenerating assets/kuvpn.icns — no CI changes needed.
+          cp crates/kuvpn-gui/assets/kuvpn.icns "$APP_BUNDLE/Contents/Resources/"
+
+          cat > "$APP_BUNDLE/Contents/Info.plist" <<-PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>kuvpn-gui</string>
+            <key>CFBundleIdentifier</key>
+            <string>tr.edu.ku.kuvpn</string>
+            <key>CFBundleName</key>
+            <string>KUVPN</string>
+            <key>CFBundleVersion</key>
+            <string>${VERSION}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${VERSION}</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleIconFile</key>
+            <string>kuvpn</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>11.0</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Ad-hoc Code Sign
+        run: |
+          codesign --force --deep --sign - KUVPN.app
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname "KUVPN" -srcfolder KUVPN.app -ov -format UDZO "KUVPN-aarch64.dmg"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: kuvpn-macos-aarch64
+          path: |
+            target/aarch64-apple-darwin/release/kuvpn-cli
+            KUVPN-aarch64.dmg
+
+  # ─── Create GitHub Release (only on tags) ───────────────────────────
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - linux-cli-x86_64
+      - linux-cli-aarch64
+      - linux-appimage-x86_64
+      - linux-appimage-aarch64
+      - windows-x86_64
+      - macos-x86_64
+      - macos-aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+
+          # Linux CLI  →  kuvpn-linux-<arch>
+          cp artifacts/kuvpn-cli-linux-x86_64/kuvpn-cli release/kuvpn-linux-x86_64
+          chmod +x release/kuvpn-linux-x86_64
+          cp artifacts/kuvpn-cli-linux-aarch64/kuvpn-cli release/kuvpn-linux-aarch64
+          chmod +x release/kuvpn-linux-aarch64
+
+          # Linux AppImage  →  KUVPN-linux-<arch>.AppImage
+          cp artifacts/kuvpn-appimage-x86_64/KUVPN-minimal-x86_64.AppImage release/KUVPN-linux-x86_64.AppImage
+          chmod +x release/KUVPN-linux-x86_64.AppImage
+          cp artifacts/kuvpn-appimage-aarch64/KUVPN-minimal-aarch64.AppImage release/KUVPN-linux-aarch64.AppImage
+          chmod +x release/KUVPN-linux-aarch64.AppImage
+
+          # Windows GUI installer  →  KUVPN-Setup-windows-x86_64.exe  (bundles CLI + OpenConnect)
+          cp artifacts/kuvpn-windows-x64/packaging/windows/KUVPN-Setup.exe release/KUVPN-Setup-windows-x86_64.exe
+
+          # macOS CLI  →  kuvpn-macos-<arch>
+          # macOS GUI  →  KUVPN-macOS-<arch>.dmg
+          cp "artifacts/kuvpn-macos-x86_64/target/x86_64-apple-darwin/release/kuvpn-cli" release/kuvpn-macos-x86_64
+          chmod +x release/kuvpn-macos-x86_64
+          cp artifacts/kuvpn-macos-x86_64/KUVPN-x86_64.dmg release/KUVPN-macOS-x86_64.dmg
+          cp "artifacts/kuvpn-macos-aarch64/target/aarch64-apple-darwin/release/kuvpn-cli" release/kuvpn-macos-aarch64
+          chmod +x release/kuvpn-macos-aarch64
+          cp artifacts/kuvpn-macos-aarch64/KUVPN-aarch64.dmg release/KUVPN-macOS-aarch64.dmg
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: release/*
+          body: |
+            > **KUVPN** is the graphical app (system tray, GUI window).
+            > **kuvpn** is the command-line tool (run `kuvpn` in a terminal).
+            > Both connect to the same VPN — pick whichever fits your workflow.
+
+            ## Installation
+
+            ### Windows
+            **Recommended** — one-line terminal installer (run in PowerShell):
+            ```powershell
+            irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
+            ```
+
+            <details><summary>Manual install</summary>
+
+            Download and run **`KUVPN-Setup-windows-x86_64.exe`** — the installer bundles OpenConnect and the CLI, and sets everything up.
+            </details>
+
+            ### Linux (GUI — `KUVPN`)
+            **Recommended** — one-line installer (also sets up openconnect):
+            ```bash
+            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
+            ```
+
+            <details><summary>Manual install</summary>
+
+            Download **`KUVPN-linux-x86_64.AppImage`** (or `aarch64`), make it executable, and run it:
+            ```bash
+            chmod +x KUVPN-linux-x86_64.AppImage && ./KUVPN-linux-x86_64.AppImage
+            ```
+            </details>
+
+            ### Linux (CLI — `kuvpn`)
+            **Recommended** — one-line installer:
+            ```bash
+            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+            ```
+
+            <details><summary>Manual install</summary>
+
+            Download **`kuvpn-linux-x86_64`** (or `aarch64`), make it executable, and move it onto your PATH:
+            ```bash
+            chmod +x kuvpn-linux-x86_64 && mv kuvpn-linux-x86_64 ~/.local/bin/kuvpn
+            ```
+            </details>
+
+            ### macOS (GUI — `KUVPN`)
+            **Recommended** — one-line installer (mounts the DMG, copies to Applications, and removes the quarantine flag automatically):
+            ```bash
+            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
+            ```
+
+            <details><summary>Manual install</summary>
+
+            Download **`KUVPN-macOS-x86_64.dmg`** (Intel) or **`KUVPN-macOS-aarch64.dmg`** (Apple Silicon), open it, and drag **KUVPN.app** to your Applications folder. Then run this command to allow the app to open (macOS blocks unsigned apps by default):
+            ```bash
+            sudo xattr -r -d com.apple.quarantine /Applications/KUVPN.app
+            ```
+            </details>
+
+            ### macOS (CLI — `kuvpn`)
+            **Recommended** — one-line installer:
+            ```bash
+            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+            ```
+
+            <details><summary>Manual install</summary>
+
+            Download **`kuvpn-macos-x86_64`** (Intel) or **`kuvpn-macos-aarch64`** (Apple Silicon), make it executable, and move it onto your PATH:
+            ```bash
+            chmod +x kuvpn-macos-x86_64 && mv kuvpn-macos-x86_64 ~/.local/bin/kuvpn
+            ```
+            </details>
