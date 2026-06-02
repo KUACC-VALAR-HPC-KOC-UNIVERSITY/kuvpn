@@ -4,7 +4,7 @@
 set -e
 
 # --- Configuration ---
-REPO="ealtun21/kuvpn-actions"
+REPO="KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn"
 INSTALL_DIR="$HOME/.local/bin"
 BINARY_NAME="kuvpn"
 GUI_NAME="KUVPN"

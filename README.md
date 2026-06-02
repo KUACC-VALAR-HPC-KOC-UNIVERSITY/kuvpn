@@ -14,19 +14,19 @@ KUVPN is a VPN client for Koç University that automates the Microsoft Azure AD 
 <tr>
 <td align="center" width="33%">
 
-### [Install](https://github.com/ealtun21/kuvpn-actions#installation)
+### [Install](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn#installation)
 Get up and running on any platform
 
 </td>
 <td align="center" width="33%">
 
-### [GUI Docs](https://github.com/ealtun21/kuvpn-actions/blob/main/docs/gui.md)
+### [GUI Docs](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/blob/main/docs/gui.md)
 Graphical app — KUVPN
 
 </td>
 <td align="center" width="33%">
 
-### [CLI Docs](https://github.com/ealtun21/kuvpn-actions/blob/main/docs/cli.md)
+### [CLI Docs](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/blob/main/docs/cli.md)
 Command-line tool — kuvpn
 
 </td>
@@ -40,13 +40,13 @@ Command-line tool — kuvpn
 **Linux:**
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
 ```
 
 **macOS:**
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
+curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
 ```
 
 The script will ask what to install (GUI, CLI, or both), set up your PATH, and check for OpenConnect.
@@ -54,25 +54,25 @@ The script will ask what to install (GUI, CLI, or both), set up your PATH, and c
 **Windows** (run in PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.ps1 | iex
 ```
 
-Or download and run [`KUVPN-Setup-windows-x86_64.exe`](https://github.com/ealtun21/kuvpn-actions/releases/latest) manually from the Releases page.
+Or download and run [`KUVPN-Setup-windows-x86_64.exe`](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/latest) manually from the Releases page.
 
 <details><summary>Non-interactive flags (for scripting / automation)</summary>
 
 ```bash
 # Linux — install both
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --all
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --all
 
 # Linux — GUI only
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --gui
 
 # Linux — CLI only
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --cli
 
 # macOS — install both
-curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --all
+curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --all
 ```
 
 </details>

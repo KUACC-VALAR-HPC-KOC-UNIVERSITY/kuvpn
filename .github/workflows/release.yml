@@ -365,6 +365,85 @@ jobs:
           chmod +x release/kuvpn-macos-aarch64
           cp artifacts/kuvpn-macos-aarch64/KUVPN-aarch64.dmg release/KUVPN-macOS-aarch64.dmg
 
+      # Single source of truth for the release notes body, shared by the
+      # release-to-this-repo step and the mirror-to-main-repo step below.
+      - name: Write release notes
+        run: |
+          cat > RELEASE_NOTES.md <<'NOTES'
+          > **KUVPN** is the graphical app (system tray, GUI window).
+          > **kuvpn** is the command-line tool (run `kuvpn` in a terminal).
+          > Both connect to the same VPN — pick whichever fits your workflow.
+
+          ## Installation
+
+          ### Windows
+          **Recommended** — one-line terminal installer (run in PowerShell):
+          ```powershell
+          irm https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.ps1 | iex
+          ```
+
+          <details><summary>Manual install</summary>
+
+          Download and run **`KUVPN-Setup-windows-x86_64.exe`** — the installer bundles OpenConnect and the CLI, and sets everything up.
+          </details>
+
+          ### Linux (GUI — `KUVPN`)
+          **Recommended** — one-line installer (also sets up openconnect):
+          ```bash
+          curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --gui
+          ```
+
+          <details><summary>Manual install</summary>
+
+          Download **`KUVPN-linux-x86_64.AppImage`** (or `aarch64`), make it executable, and run it:
+          ```bash
+          chmod +x KUVPN-linux-x86_64.AppImage && ./KUVPN-linux-x86_64.AppImage
+          ```
+          </details>
+
+          ### Linux (CLI — `kuvpn`)
+          **Recommended** — one-line installer:
+          ```bash
+          curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --cli
+          ```
+
+          <details><summary>Manual install</summary>
+
+          Download **`kuvpn-linux-x86_64`** (or `aarch64`), make it executable, and move it onto your PATH:
+          ```bash
+          chmod +x kuvpn-linux-x86_64 && mv kuvpn-linux-x86_64 ~/.local/bin/kuvpn
+          ```
+          </details>
+
+          ### macOS (GUI — `KUVPN`)
+          **Recommended** — one-line installer (mounts the DMG, copies to Applications, and removes the quarantine flag automatically):
+          ```bash
+          curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --gui
+          ```
+
+          <details><summary>Manual install</summary>
+
+          Download **`KUVPN-macOS-x86_64.dmg`** (Intel) or **`KUVPN-macOS-aarch64.dmg`** (Apple Silicon), open it, and drag **KUVPN.app** to your Applications folder. Then run this command to allow the app to open (macOS blocks unsigned apps by default):
+          ```bash
+          sudo xattr -r -d com.apple.quarantine /Applications/KUVPN.app
+          ```
+          </details>
+
+          ### macOS (CLI — `kuvpn`)
+          **Recommended** — one-line installer:
+          ```bash
+          curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --cli
+          ```
+
+          <details><summary>Manual install</summary>
+
+          Download **`kuvpn-macos-x86_64`** (Intel) or **`kuvpn-macos-aarch64`** (Apple Silicon), make it executable, and move it onto your PATH:
+          ```bash
+          chmod +x kuvpn-macos-x86_64 && mv kuvpn-macos-x86_64 ~/.local/bin/kuvpn
+          ```
+          </details>
+          NOTES
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -372,76 +451,35 @@ jobs:
           draft: false
           prerelease: false
           files: release/*
-          body: |
-            > **KUVPN** is the graphical app (system tray, GUI window).
-            > **kuvpn** is the command-line tool (run `kuvpn` in a terminal).
-            > Both connect to the same VPN — pick whichever fits your workflow.
+          body_path: RELEASE_NOTES.md
 
-            ## Installation
+      # Mirror the same release to the canonical org repo. Requires a
+      # RELEASE_TOKEN secret: a PAT (fine-grained, contents: read+write on
+      # KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn). Without it this step is skipped
+      # and only the release above is published — nothing breaks.
+      - name: Check for mirror token
+        id: mirror
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -n "$RELEASE_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::RELEASE_TOKEN not set — skipping mirror to main repo"
+          fi
 
-            ### Windows
-            **Recommended** — one-line terminal installer (run in PowerShell):
-            ```powershell
-            irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
-            ```
-
-            <details><summary>Manual install</summary>
-
-            Download and run **`KUVPN-Setup-windows-x86_64.exe`** — the installer bundles OpenConnect and the CLI, and sets everything up.
-            </details>
-
-            ### Linux (GUI — `KUVPN`)
-            **Recommended** — one-line installer (also sets up openconnect):
-            ```bash
-            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
-            ```
-
-            <details><summary>Manual install</summary>
-
-            Download **`KUVPN-linux-x86_64.AppImage`** (or `aarch64`), make it executable, and run it:
-            ```bash
-            chmod +x KUVPN-linux-x86_64.AppImage && ./KUVPN-linux-x86_64.AppImage
-            ```
-            </details>
-
-            ### Linux (CLI — `kuvpn`)
-            **Recommended** — one-line installer:
-            ```bash
-            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
-            ```
-
-            <details><summary>Manual install</summary>
-
-            Download **`kuvpn-linux-x86_64`** (or `aarch64`), make it executable, and move it onto your PATH:
-            ```bash
-            chmod +x kuvpn-linux-x86_64 && mv kuvpn-linux-x86_64 ~/.local/bin/kuvpn
-            ```
-            </details>
-
-            ### macOS (GUI — `KUVPN`)
-            **Recommended** — one-line installer (mounts the DMG, copies to Applications, and removes the quarantine flag automatically):
-            ```bash
-            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
-            ```
-
-            <details><summary>Manual install</summary>
-
-            Download **`KUVPN-macOS-x86_64.dmg`** (Intel) or **`KUVPN-macOS-aarch64.dmg`** (Apple Silicon), open it, and drag **KUVPN.app** to your Applications folder. Then run this command to allow the app to open (macOS blocks unsigned apps by default):
-            ```bash
-            sudo xattr -r -d com.apple.quarantine /Applications/KUVPN.app
-            ```
-            </details>
-
-            ### macOS (CLI — `kuvpn`)
-            **Recommended** — one-line installer:
-            ```bash
-            curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
-            ```
-
-            <details><summary>Manual install</summary>
-
-            Download **`kuvpn-macos-x86_64`** (Intel) or **`kuvpn-macos-aarch64`** (Apple Silicon), make it executable, and move it onto your PATH:
-            ```bash
-            chmod +x kuvpn-macos-x86_64 && mv kuvpn-macos-x86_64 ~/.local/bin/kuvpn
-            ```
-            </details>
+      - name: Mirror release to main repo
+        if: steps.mirror.outputs.enabled == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          repository: KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn
+          tag_name: ${{ github.ref_name }}
+          target_commitish: main
+          name: KUVPN ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: release/*
+          body_path: RELEASE_NOTES.md

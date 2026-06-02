@@ -24,7 +24,7 @@ It is a single static binary with no runtime dependencies, making it well-suited
 **Recommended:**
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
 ```
 
 The script will ask what to install — choose CLI. It downloads the right static binary for your platform, places it at `~/.local/bin/kuvpn`, adds it to your PATH if needed, and optionally installs OpenConnect.
@@ -32,14 +32,14 @@ The script will ask what to install — choose CLI. It downloads the right stati
 <details><summary>Non-interactive (for scripting / automation)</summary>
 
 ```bash
-wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+wget -qO- https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --cli
 ```
 
 </details>
 
 <details><summary>Manual install</summary>
 
-Download **`kuvpn-linux-x86_64`** (or `aarch64`) from the [Releases](https://github.com/ealtun21/kuvpn-actions/releases/latest) page, make it executable, and move it onto your PATH:
+Download **`kuvpn-linux-x86_64`** (or `aarch64`) from the [Releases](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/latest) page, make it executable, and move it onto your PATH:
 
 ```bash
 # x86_64
@@ -56,7 +56,7 @@ chmod +x kuvpn-linux-aarch64 && mv kuvpn-linux-aarch64 ~/.local/bin/kuvpn
 **Recommended:**
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
+curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
 ```
 
 The script will ask what to install — choose CLI. It downloads the right static binary for your platform, places it at `~/.local/bin/kuvpn`, adds it to your PATH if needed, and optionally installs OpenConnect.
@@ -64,14 +64,14 @@ The script will ask what to install — choose CLI. It downloads the right stati
 <details><summary>Non-interactive (for scripting / automation)</summary>
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+curl -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash -s -- --cli
 ```
 
 </details>
 
 <details><summary>Manual install</summary>
 
-Download **`kuvpn-macos-x86_64`** (Intel) or **`kuvpn-macos-aarch64`** (Apple Silicon) from the [Releases](https://github.com/ealtun21/kuvpn-actions/releases/latest) page, make it executable, and move it onto your PATH:
+Download **`kuvpn-macos-x86_64`** (Intel) or **`kuvpn-macos-aarch64`** (Apple Silicon) from the [Releases](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/latest) page, make it executable, and move it onto your PATH:
 
 ```bash
 # Intel
@@ -88,14 +88,14 @@ chmod +x kuvpn-macos-aarch64 && mv kuvpn-macos-aarch64 ~/.local/bin/kuvpn
 **Recommended** — one-line terminal installer (run in PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.ps1 | iex
 ```
 
 The script downloads and runs the latest installer silently. The CLI (`kuvpn`) is bundled and added to your PATH — no extra setup required.
 
 <details><summary>Manual install</summary>
 
-Download and run **`KUVPN-Setup-windows-x86_64.exe`** from the [Releases](https://github.com/ealtun21/kuvpn-actions/releases/latest) page. The installer bundles the CLI and adds it to your PATH automatically.
+Download and run **`KUVPN-Setup-windows-x86_64.exe`** from the [Releases](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases/latest) page. The installer bundles the CLI and adds it to your PATH automatically.
 
 </details>
 

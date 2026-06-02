@@ -1,9 +1,9 @@
 # KUVPN Windows Installer
-# Usage: irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
-$Repo    = "ealtun21/kuvpn-actions"
+$Repo    = "KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn"
 $ExeName = "KUVPN-Setup-windows-x86_64.exe"
 
 function Write-Info    { Write-Host "[INFO] $args" -ForegroundColor Cyan }
