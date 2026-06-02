@@ -1,201 +1,143 @@
-# KUVPN v2.0.2
+# KUVPN v3.0.0
 
-KUVPN is a simple CLI tool written in Rust that retrieves the DSID cookie and executes the OpenConnect command to connect to the VPN for Koç University.
+KUVPN is a VPN client for Koç University that automates the Microsoft Azure AD / MFA browser login to retrieve a DSID cookie, then hands off to OpenConnect to establish the VPN tunnel.
 
+> **KUVPN** is the graphical app (system tray, GUI window).
+> **kuvpn** is the command-line tool (run `kuvpn` in a terminal).
+> Both connect to the same VPN — pick whichever fits your workflow.
 
-## Table of Contents
+---
 
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-  - [Binary Install (Recommended)](#binary-install-recommended)
-  - [Binary Install (Manual)](#binary-install-manual)
-  - [Build & Install from Source](#build--install-from-source)
-- [Usage](#usage)
-  - [Command-line Options](#command-line-options)
-- [License](#license)
-- [Contributing](#contributing)
+## Documentation
 
+<table>
+<tr>
+<td align="center" width="33%">
 
-## Features
+### [Install](https://github.com/ealtun21/kuvpn-actions#installation)
+Get up and running on any platform
 
-- ✅ **Login** to vpn.ku.edu.tr on Linux/Mac.
-- ✅ **Retrieve DSID cookie**
-- ✅ **Execute OpenConnect command**
-- ✅ **Headless Execution**
-- ✅ **Automatic or Manuel Login Navigation**
-- ✅ **Session management**
-- ✅ **CLI Based**
-- ✅ **Openconnect Wrapper**
+</td>
+<td align="center" width="33%">
 
+### [GUI Docs](https://github.com/ealtun21/kuvpn-actions/blob/main/docs/gui.md)
+Graphical app — KUVPN
 
-## Prerequisites
+</td>
+<td align="center" width="33%">
 
-- **Mandatory:** OpenConnect  
-  - On Ubuntu:  
-    ```bash
-    sudo apt install openconnect
-    ```
+### [CLI Docs](https://github.com/ealtun21/kuvpn-actions/blob/main/docs/cli.md)
+Command-line tool — kuvpn
+
+</td>
+</tr>
+</table>
+
+---
 
 ## Installation
 
-### Binary Install (Recommended)
-
-Install KUVPN with the following command:
+**Linux:**
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSfL https://raw.githubusercontent.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/main/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
 ```
 
-> **Note:** Always inspect scripts before running commands from the internet!
-
-### Binary Install (Manual)
-
-1. **Download:** Get the latest binary from the [GitHub releases page](https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn/releases).
-
-2. **Move the binary:** Place it in a directory that's in your `$PATH` (e.g., `/usr/local/bin/`):
-
-   ```bash
-   sudo mv kuvpn /usr/local/bin/
-   ```
-
-3. **Make it executable:**
-
-   ```bash
-   sudo chmod +x /usr/local/bin/kuvpn
-   ```
-
-4. **Verify installation:**
-
-   ```bash
-   kuvpn --version
-   ```
-
-### Build & Install from Source
-
-1. **Install Rustup:**  
-   Use the following command (or your package manager) to install Rustup. Although Cargo is available through some package managers, using Rustup is recommended:
-
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
-
-2. **Install KUVPN from source:**
-
-   ```bash
-   cargo install --git https://github.com/KUACC-VALAR-HPC-KOC-UNIVERSITY/kuvpn
-   ```
-
-## Usage
-
-Simply run KUVPN with: ( No arguments required )
+**macOS:**
 
 ```bash
-kuvpn
+curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash
 ```
 
-For help and more details:
+The script will ask what to install (GUI, CLI, or both), set up your PATH, and check for OpenConnect.
+
+**Windows** (run in PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.ps1 | iex
+```
+
+Or download and run [`KUVPN-Setup-windows-x86_64.exe`](https://github.com/ealtun21/kuvpn-actions/releases/latest) manually from the Releases page.
+
+<details><summary>Non-interactive flags (for scripting / automation)</summary>
 
 ```bash
-kuvpn --help
+# Linux — install both
+wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --all
+
+# Linux — GUI only
+wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --gui
+
+# Linux — CLI only
+wget -qO- https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --cli
+
+# macOS — install both
+curl -sSfL https://raw.githubusercontent.com/ealtun21/kuvpn-actions/main/install.sh | bash -s -- --all
 ```
 
-### Command-line Options 
+</details>
 
-Below is the help message displayed when running `kuvpn --help`:
+## Features
 
-```text
-A convenient tool for connecting to Koç University's VPN using OpenConnect.
+- **Two ways to connect** — graphical app for everyday desktop use, or a single static CLI binary for terminals, scripts, and SSH sessions. Same VPN, same saved session.
+- **Hands-free Azure AD / MFA login** — automated browser walks through the entire login: email, password, Authenticator push, number matching, and OTP fallback if push isn't available.
+- **Three login modes** — Full Auto (headless), Visual Auto (visible browser, still automated), and Manual (you drive the login). Sessions are saved so the next connect goes straight through.
+- **Number-matching front and centre** — when Microsoft asks you to type a code into Authenticator, KUVPN brings the window forward and shows the code in big, readable text.
+- **System tray with one-click actions** — connect, disconnect, show window, wipe session, or copy logs from the tray menu. The tray icon reflects current state (idle, connecting, connected, error).
+- **Connection history** — past sessions with timestamps, durations, and reconnect counts, in both the GUI History tab and `kuvpn --history`.
+- **Auto-reconnect that watches the tunnel** — detects when the VPN interface itself drops (not just the OpenConnect process) and retries up to 3 times. Stale saved sessions are wiped and re-authenticated automatically.
+- **Conflict detection** — refuses to start if another full-tunnel VPN is already routing your traffic (e.g. a Tailscale exit node), so you don't end up half-connected to two networks.
+- **Routing flexibility** — full tunnel for "everything through KU", or supply your own vpnc-script for split tunneling and custom DNS.
+- **20 themes** — 10 color families (Crimson, Slate, Ocean, Forest, Rose, Violet, Ember, Frost, Sand, Pebble), each with light and dark variants, plus rounding and shadow controls.
+- **Cross-platform** — Linux (x86_64, aarch64), macOS (Intel and Apple Silicon), and Windows (x86_64). OpenConnect and the Wintun driver are bundled in the Windows installer.
 
-Usage: kuvpn [OPTIONS]
+---
 
-Options:
-  -u, --url <URL>
-          The URL to the page where we will start logging in and looking for DSID
-          
-          [default: https://vpn.ku.edu.tr]
+## Screenshots
 
-  -l, --level <LEVEL>
-          The level of logging
+### Graphical Interface (KUVPN)
 
-          Possible values:
-          - off:   No logs
-          - info:  Informational messages
-          - warn:  Warning messages
-          - debug: Debugging messages
-          - error: Error messages
-          - trace: Detailed stacktrace messages
-          
-          [default: error]
+| Main Window | History | Settings |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/connected.png" width="300"> | <img src="docs/screenshots/gui-history.png" width="300"> | <img src="docs/screenshots/settings.png" width="300"> |
 
-      --domain <DOMAIN>
-          The Domain of the DSID found
-          
-          [default: vpn.ku.edu.tr]
+| MFA Authentication | Email Automation | Live Logs |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/connecting-mfa.png" width="300"> | <img src="docs/screenshots/connecting-email.png" width="300"> | <img src="docs/screenshots/session-logger.png" width="300"> |
 
-  -g, --get-dsid
-          Gives the user the dsid without running openconnect
+### Command Line Interface (kuvpn)
 
-  -d, --disable-headless
-          Gets DSID without headless mode
+| Connected | Connecting | MFA Prompt |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/cli-connected.png" width="300"> | <img src="docs/screenshots/cli-connecting.png" width="300"> | <img src="docs/screenshots/cli-mfa.png" width="300"> |
 
-  -c, --clean
-          Delete session information
+| History | Session Management | Disconnected |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/cli-history.png" width="300"> | <img src="docs/screenshots/cli-clear-session.png" width="300"> | <img src="docs/screenshots/cli-disconnected.png" width="300"> |
 
-  -r, --run-command <RUN_COMMAND>
-          Command to run openconnect with (e.g., doas, sudo, pkexec, or a custom script)
+### Themes
 
-      --openconnect-path <OPENCONNECT_PATH>
-          Path or command name for openconnect. Defaults to 'openconnect'. Can be a relative or absolute path
-          
-          [default: openconnect]
+KUVPN features 10 unique color families, each with Light and Dark modes (20 themes total).
 
-      --no-auto-login
-          Disable automatic login handlers and only poll for DSID in a headful browser
+| | Dark | Light |
+| --- | :---: | :---: |
+| **Crimson (Default)** | <img src="docs/screenshots/gui-theme-dark.png" width="300"> | <img src="docs/screenshots/gui-theme-light.png" width="300"> |
+| **Slate** | <img src="docs/screenshots/slate-theme-dark.png" width="300"> | <img src="docs/screenshots/slate-theme-light.png" width="300"> |
+| **Ocean** | <img src="docs/screenshots/ocean-theme-dark.png" width="300"> | <img src="docs/screenshots/ocean-theme-light.png" width="300"> |
+| **Forest** | <img src="docs/screenshots/forest-theme-dark.png" width="300"> | <img src="docs/screenshots/forest-theme-light.png" width="300"> |
+| **Rose** | <img src="docs/screenshots/rose-theme-dark.png" width="300"> | <img src="docs/screenshots/rose-theme-light.png" width="300"> |
+| **Violet** | <img src="docs/screenshots/violet-theme-dark.png" width="300"> | <img src="docs/screenshots/violet-theme-light.png" width="300"> |
+| **Ember** | <img src="docs/screenshots/ember-theme-dark.png" width="300"> | <img src="docs/screenshots/ember-theme-light.png" width="300"> |
+| **Frost** | <img src="docs/screenshots/frost-theme-dark.png" width="300"> | <img src="docs/screenshots/frost-theme-light.png" width="300"> |
+| **Sand** | <img src="docs/screenshots/sand-theme-dark.png" width="300"> | <img src="docs/screenshots/sand-theme-light.png" width="300"> |
+| **Pebble** | <img src="docs/screenshots/pebble-theme-dark.png" width="300"> | <img src="docs/screenshots/pebble-theme-light.png" width="300"> |
 
-      --email <EMAIL>
-          Email for login (optional)
-
-  -h, --help
-          Print help (see a summary with '-h')
-
-  -V, --version
-          Print version
-```
-
-### Troubleshooting: Cookie Rejection
-
-If you get this error, the easiest fix is to clear your session:
-```
-Unexpected 302 result from server
-Creating SSL connection failed
-Cookie was rejected by server; exiting.
-```
-
-You can clear your session like this:
-```
-kuvpn -c
-```
-
-### Troubleshooting: Unable to login?
-
-If you aren't able to login via the cli'a automation, you can disable the auto login so that you can do it via the browser's gui.
-To do this run the following command:
-```
-kuvpn --no-auto-login --disable-headless
-```
-
-Later, once you login, it will remember your session so you can login without the need for this, on the next logins.
-
-### Waiting forever: seeminly doing nothing?
-In this case, kuvpn may be trying to download a static chrome to run, you can check logs using `-l debug`, if after a long time it still fails to download & run chrome, you can install chrome/chromium by hand to the machine, to bypass this issue.
+---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-
+MIT — see [LICENSE](LICENSE).
 
 ## Contributing
 
-Contributions are welcome! If you have ideas, bug fixes, or improvements, please open an issue or submit a pull request.
+Issues and pull requests are welcome.

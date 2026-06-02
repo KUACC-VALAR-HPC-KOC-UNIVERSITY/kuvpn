@@ -1,1 +1,34 @@
-/target
+# Build artifacts
+/target/
+/dist/
+**/*.rs.bk
+
+# AppImage build artifacts
+*.AppImage
+packaging/appimage/AppDir/
+packaging/appimage/linuxdeploy
+packaging/appimage/appimagetool
+packaging/appimage/linuxdeploy-plugin-gtk.sh
+packaging/appimage/kuvpn.png
+linuxdeploy-plugin-gtk.sh
+
+# macOS build artifacts
+*.app/
+*.dmg
+*.pkg
+
+# Windows build artifacts
+*.exe
+*.msi
+packaging/windows/KUVPN-Setup.exe
+packaging/windows/openconnect/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

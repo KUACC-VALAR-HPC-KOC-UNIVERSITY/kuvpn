@@ -1,0 +1,13 @@
+target/
+KUVPN.app/
+*.AppImage
+*.dmg
+*.pkg
+*.exe
+packaging/appimage/AppDir/
+packaging/appimage/linuxdeploy
+packaging/appimage/appimagetool
+packaging/appimage/linuxdeploy-plugin-gtk.sh
+packaging/appimage/kuvpn.png
+.git/
+.github/
