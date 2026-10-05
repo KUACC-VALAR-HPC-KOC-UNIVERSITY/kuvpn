@@ -108,12 +108,11 @@ detect_platform() {
 resolve_version() {
     if [ "$VERSION" = "latest" ]; then
         log_info "Resolving latest version..."
-        local latest_url="https://github.com/$REPO/releases/latest"
-        if command -v wget >/dev/null 2>&1; then
-            TAG=$(wget -qO /dev/null --server-response "$latest_url" 2>&1 \
-                | grep -i 'Location:' | tail -1 | tr -d '[:space:]' | rev | cut -d/ -f1 | rev)
-        elif command -v curl >/dev/null 2>&1; then
-            TAG=$(curl -sL -o /dev/null -w '%{url_effective}' "$latest_url" | rev | cut -d/ -f1 | rev)
+        local api_url="https://api.github.com/repos/$REPO/releases/latest"
+        if command -v curl >/dev/null 2>&1; then
+            TAG=$(curl -sL "$api_url" | grep '"tag_name"' | head -n1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
+        elif command -v wget >/dev/null 2>&1; then
+            TAG=$(wget -qO- "$api_url" | grep '"tag_name"' | head -n1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')
         else
             log_fail "Neither wget nor curl is available. Please install wget and try again."
         fi
